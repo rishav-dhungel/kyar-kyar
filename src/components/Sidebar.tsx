@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Folder, 
   FolderOpen, 
@@ -6,6 +6,7 @@ import {
   ChevronDown, 
   ChevronRight, 
   Pin, 
+  PinOff,
   Github, 
   Twitter, 
   Linkedin,
@@ -14,6 +15,8 @@ import {
   Compass,
   PanelLeft,
   PanelRight,
+  PanelLeftClose,
+  PanelRightClose,
   Sidebar as SidebarIcon,
   Search,
   Moon,
@@ -25,10 +28,16 @@ interface SidebarProps {
   config: SiteConfig;
   tree: FolderNode;
   notes: NoteItem[];
+  activeNote?: NoteItem | null;
   activeNoteId: string | null;
   onSelectNote: (noteId: string) => void;
   selectedTag: string | null;
   onSelectTag: (tag: string | null) => void;
+  selectedFolder?: string | null;
+  onSelectFolder?: (folderPath: string) => void;
+  isAutoHideMode: boolean;
+  isCollapsed?: boolean;
+  onToggleAutoHide: () => void;
   isOpen: boolean;
   onClose: () => void;
   placement: SidebarPlacement;
@@ -44,10 +53,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
   config,
   tree,
   notes,
+  activeNote,
   activeNoteId,
   onSelectNote,
   selectedTag,
   onSelectTag,
+  selectedFolder,
+  onSelectFolder,
+  isAutoHideMode,
+  isCollapsed,
+  onToggleAutoHide,
   isOpen,
   onClose,
   placement,
@@ -92,36 +107,46 @@ export const Sidebar: React.FC<SidebarProps> = ({
     return tree.children.filter((child) => child.isFolder) as FolderNode[];
   }, [tree]);
 
-  // Unique tags with counts
-  const tagCounts = React.useMemo(() => {
-    const map = new Map<string, number>();
-    for (const note of notes) {
-      for (const tag of note.tags) {
-        map.set(tag, (map.get(tag) || 0) + 1);
-      }
-    }
-    return Array.from(map.entries()).sort((a, b) => b[1] - a[1]);
-  }, [notes]);
-
   const renderTreeNode = (node: FileTreeNode, depth = 0) => {
     if (node.isFolder) {
       const folder = node as FolderNode;
       const isExpanded = expandedFolders[folder.path] !== false;
 
+      const isFolderActive = selectedFolder === folder.path;
+
       return (
         <div key={`folder-${folder.path}`} className="select-none my-0.5">
           <div 
-            onClick={() => toggleFolder(folder.path)}
-            className="flex items-center justify-between py-1.5 px-2 rounded-md cursor-pointer text-xs font-medium transition-colors hover:opacity-85"
+            onClick={() => {
+              if (!isExpanded) toggleFolder(folder.path);
+              onSelectFolder?.(folder.path);
+              if (isPopup || window.innerWidth < 768) {
+                onClose();
+              }
+            }}
+            className={`flex items-center justify-between py-1.5 px-2 rounded-md cursor-pointer text-xs font-medium transition-colors ${
+              isFolderActive ? 'font-semibold' : 'hover:opacity-85'
+            }`}
             style={{ 
               paddingLeft: `${depth * 12 + 8}px`,
-              color: 'var(--text-main)'
+              backgroundColor: isFolderActive ? 'var(--card-main)' : 'transparent',
+              color: isFolderActive ? 'var(--text-heading)' : 'var(--text-main)',
+              borderLeft: isFolderActive ? '2px solid var(--accent)' : '2px solid transparent',
             }}
           >
             <div className="flex items-center gap-1.5 flex-1 min-w-0">
-              <span style={{ color: 'var(--text-muted)' }}>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleFolder(folder.path);
+                }}
+                className="p-0.5 -ml-1 rounded hover:opacity-80"
+                style={{ color: 'var(--text-muted)' }}
+                title={isExpanded ? 'Collapse folder' : 'Expand folder'}
+              >
                 {isExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
-              </span>
+              </button>
               <span style={{ color: 'var(--accent)' }}>
                 {isExpanded ? <FolderOpen className="w-3.5 h-3.5" /> : <Folder className="w-3.5 h-3.5" />}
               </span>
@@ -129,7 +154,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
 
             {config.navigation.showFolderCounts && (
-              <span className="text-[10px] font-mono" style={{ color: 'var(--text-muted)' }}>
+              <span 
+                className="text-[10px] font-mono px-1 py-0.2 rounded" 
+                style={{ color: 'var(--text-muted)' }}
+                title={`${folder.children.filter((c) => !c.isFolder).length} subpages`}
+              >
                 {folder.children.filter((c) => !c.isFolder).length}
               </span>
             )}
@@ -188,25 +217,35 @@ export const Sidebar: React.FC<SidebarProps> = ({
     );
   };
 
-  // Determine slide-in / dock classes based on placement and isOpen state
+  // Determine slide-in / dock classes based on placement, isAutoHideMode, and isOpen state
+  const isEffectiveAutoHide = isCollapsed !== undefined ? isCollapsed : isAutoHideMode;
+
   let positioningClasses = '';
   if (isPopup) {
     positioningClasses = `fixed top-0 bottom-0 z-50 w-72 lg:w-80 shadow-2xl transition-transform duration-200 ease-in-out ${
       isOpen ? 'left-0 translate-x-0' : 'left-0 -translate-x-full pointer-events-none'
     }`;
   } else if (isRight) {
-    positioningClasses = `fixed md:sticky top-0 bottom-0 z-40 md:z-20 h-screen shrink-0 transition-all duration-200 ease-in-out ${
-      isOpen 
-        ? 'right-0 translate-x-0 w-72 lg:w-80 border-l opacity-100' 
-        : 'right-0 translate-x-full md:translate-x-0 w-0 md:w-0 border-transparent opacity-0 pointer-events-none overflow-hidden'
-    }`;
+    positioningClasses = isEffectiveAutoHide
+      ? `fixed top-0 bottom-0 right-0 z-50 h-screen w-72 lg:w-80 border-l shadow-2xl transition-all duration-200 ease-in-out ${
+          isOpen ? 'translate-x-0 opacity-100 pointer-events-auto' : 'translate-x-full opacity-0 pointer-events-none'
+        }`
+      : `fixed md:sticky top-0 bottom-0 z-40 md:z-20 h-screen shrink-0 transition-all duration-200 ease-in-out ${
+          isOpen 
+            ? 'right-0 translate-x-0 w-72 lg:w-80 border-l opacity-100' 
+            : 'right-0 translate-x-full md:translate-x-0 w-0 md:w-0 border-transparent opacity-0 pointer-events-none overflow-hidden'
+        }`;
   } else {
     // Left placement
-    positioningClasses = `fixed md:sticky top-0 bottom-0 z-40 md:z-20 h-screen shrink-0 transition-all duration-200 ease-in-out ${
-      isOpen 
-        ? 'left-0 translate-x-0 w-72 lg:w-80 border-r opacity-100' 
-        : 'left-0 -translate-x-full md:translate-x-0 w-0 md:w-0 border-transparent opacity-0 pointer-events-none overflow-hidden'
-    }`;
+    positioningClasses = isEffectiveAutoHide
+      ? `fixed top-0 bottom-0 left-0 z-50 h-screen w-72 lg:w-80 border-r shadow-2xl transition-all duration-200 ease-in-out ${
+          isOpen ? 'translate-x-0 opacity-100 pointer-events-auto' : '-translate-x-full opacity-0 pointer-events-none'
+        }`
+      : `fixed md:sticky top-0 bottom-0 z-40 md:z-20 h-screen shrink-0 transition-all duration-200 ease-in-out ${
+          isOpen 
+            ? 'left-0 translate-x-0 w-72 lg:w-80 border-r opacity-100' 
+            : 'left-0 -translate-x-full md:translate-x-0 w-0 md:w-0 border-transparent opacity-0 pointer-events-none overflow-hidden'
+        }`;
   }
 
   return (
@@ -331,24 +370,26 @@ export const Sidebar: React.FC<SidebarProps> = ({
               </div>
             </div>
 
-            {/* Close / Collapse button */}
-            <button 
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                onClose();
-              }}
-              className="p-1.5 rounded-md hover:opacity-80 transition-opacity border cursor-pointer"
-              style={{ 
-                borderColor: 'var(--border-main)',
-                backgroundColor: 'var(--card-main)',
-                color: 'var(--text-muted)' 
-              }}
-              title="Collapse sidebar (⌘\)"
-              aria-label="Collapse sidebar"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
+            {/* Mobile / Popup close button */}
+            {(isPopup || (typeof window !== 'undefined' && window.innerWidth < 768)) && (
+              <button 
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onClose();
+                }}
+                className="p-1.5 rounded-md hover:opacity-80 transition-opacity border cursor-pointer md:hidden shrink-0"
+                style={{ 
+                  borderColor: 'var(--border-main)',
+                  backgroundColor: 'var(--card-main)',
+                  color: 'var(--text-muted)' 
+                }}
+                title="Close sidebar"
+                aria-label="Close sidebar"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
 
           {config.bio && (
@@ -413,6 +454,26 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <Moon className="w-4 h-4 text-indigo-400" />
             )}
           </button>
+
+          {/* Pin / Collapse Toggle Button beside theme toggle */}
+          <button
+            type="button"
+            onClick={onToggleAutoHide}
+            className="p-2 rounded-lg border hover:opacity-85 transition-all cursor-pointer shrink-0 flex items-center justify-center shadow-xs"
+            style={{
+              backgroundColor: isAutoHideMode ? 'color-mix(in srgb, var(--accent) 18%, transparent)' : 'var(--card-main)',
+              borderColor: isAutoHideMode ? 'var(--accent)' : 'var(--border-main)',
+              color: isAutoHideMode ? 'var(--accent)' : 'var(--text-heading)',
+            }}
+            title={isAutoHideMode ? "Sidebar in hover peek mode (Click to pin open)" : "Pin open (Click to collapse & reveal on hover)"}
+            aria-label="Toggle pin sidebar"
+          >
+            {isAutoHideMode ? (
+              <PinOff className="w-4 h-4" />
+            ) : (
+              <Pin className="w-4 h-4" />
+            )}
+          </button>
         </div>
 
         {/* Navigation list */}
@@ -445,60 +506,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
               </div>
               <div className="space-y-0.5">
                 {folderNodes.map((folderNode) => renderTreeNode(folderNode, 0))}
-              </div>
-            </div>
-          )}
-
-          {/* Tags section */}
-          {tagCounts.length > 0 && (
-            <div 
-              className="pt-2 border-t"
-              style={{ borderColor: 'var(--border-main)' }}
-            >
-              <div className="flex items-center justify-between mb-1.5 px-2">
-                <span 
-                  className="text-[11px] font-semibold uppercase tracking-wider font-mono"
-                  style={{ color: 'var(--text-muted)' }}
-                >
-                  Topics ({tagCounts.length})
-                </span>
-                {selectedTag && (
-                  <button
-                    onClick={() => onSelectTag(null)}
-                    className="text-[10px] hover:underline"
-                    style={{ color: 'var(--accent)' }}
-                  >
-                    Clear
-                  </button>
-                )}
-              </div>
-              <div className="flex flex-wrap gap-1 px-1">
-                {tagCounts.map(([tag, count]) => {
-                  const isSelected = selectedTag === tag;
-                  return (
-                    <button
-                      key={tag}
-                      onClick={() => {
-                        onSelectTag(isSelected ? null : tag);
-                        if (isPopup || window.innerWidth < 768) {
-                          onClose();
-                        }
-                      }}
-                      className={`text-xs px-2 py-0.5 rounded transition-colors text-left flex items-center gap-1 border ${
-                        isSelected ? 'font-medium shadow-xs' : 'hover:opacity-80'
-                      }`}
-                      style={{
-                        backgroundColor: isSelected ? 'var(--card-main)' : 'transparent',
-                        borderColor: isSelected ? 'var(--accent)' : 'var(--border-main)',
-                        color: isSelected ? 'var(--accent)' : 'var(--text-main)',
-                      }}
-                    >
-                      <span style={{ color: 'var(--text-muted)' }}>#</span>
-                      <span>{tag}</span>
-                      <span className="text-[10px] font-mono opacity-60">({count})</span>
-                    </button>
-                  );
-                })}
               </div>
             </div>
           )}

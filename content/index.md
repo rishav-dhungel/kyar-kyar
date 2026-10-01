@@ -6,13 +6,13 @@ tags: [guides, documentation, index, overview]
 description: Technical guides and documentation for kyar-kyar.
 ---
 
-# Guides & Documentation 📖
+# Guides & Documentation
 
 Welcome to the **kyar-kyar** guides repository. This site contains documentation and operational guides for setting up, configuring, writing in, and deploying the kyar-kyar digital garden and static documentation engine.
 
 ---
 
-## 📚 Available Guides
+## Available Guides
 
 Browse through the guides below or use the sidebar on the left:
 
@@ -33,7 +33,7 @@ Step-by-step instructions for deploying your notes using automated GitHub Action
 
 ---
 
-## 🔍 Navigation Shortcuts
+## Navigation Shortcuts
 
 - **Search:** Press <kbd>Cmd</kbd> + <kbd>K</kbd> (Mac) or <kbd>Ctrl</kbd> + <kbd>K</kbd> (Windows/Linux) to search across all guides and notes.
 - **Sidebar Toggle:** Press <kbd>Cmd</kbd> + <kbd>\</kbd> or <kbd>Ctrl</kbd> + <kbd>\</kbd> to toggle the sidebar.

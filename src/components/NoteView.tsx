@@ -12,7 +12,6 @@ import {
 } from 'lucide-react';
 import { NoteItem, SiteConfig } from '../types';
 import { TableOfContents } from './TableOfContents';
-import { ReadingProgressBar } from './ReadingProgressBar';
 import { resolveNote } from '../utils/noteResolver';
 
 interface NoteViewProps {
@@ -20,6 +19,7 @@ interface NoteViewProps {
   allNotes: NoteItem[];
   config: SiteConfig;
   onSelectNote: (noteId: string) => void;
+  onSelectFolder?: (folderPath: string) => void;
   onSelectTag?: (tag: string) => void;
   prevNote: NoteItem | null;
   nextNote: NoteItem | null;
@@ -30,6 +30,7 @@ export const NoteView: React.FC<NoteViewProps> = ({
   allNotes,
   config,
   onSelectNote,
+  onSelectFolder,
   onSelectTag,
   prevNote,
   nextNote,
@@ -65,12 +66,30 @@ export const NoteView: React.FC<NoteViewProps> = ({
         return;
       }
 
-      // 2. Explicit wikilink or internal note target
+      // 2. Folder link: e.g. <a href="#/folder/..." or wikilink to a folder
+      if (href && href.startsWith('#/folder/')) {
+        e.preventDefault();
+        const folder = decodeURIComponent(href.replace('#/folder/', ''));
+        onSelectFolder?.(folder);
+        return;
+      }
+
+      // 3. Explicit wikilink or internal note target
       if (dataTarget) {
         const found = resolveNote(dataTarget, allNotes);
         if (found) {
           e.preventDefault();
           onSelectNote(found.id);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          return;
+        }
+
+        // Check if dataTarget refers to a folder
+        const cleanTarget = dataTarget.toLowerCase().replace(/^\/+|\/+$/g, '');
+        const isFolder = allNotes.some((n) => (n.folder || '').toLowerCase().startsWith(cleanTarget));
+        if (isFolder) {
+          e.preventDefault();
+          onSelectFolder?.(cleanTarget);
           window.scrollTo({ top: 0, behavior: 'smooth' });
           return;
         }
@@ -136,6 +155,12 @@ export const NoteView: React.FC<NoteViewProps> = ({
       .filter((n): n is NoteItem => Boolean(n));
   }, [note.backlinks, allNotes]);
 
+  // Subpages in same folder
+  const siblingNotes = React.useMemo(() => {
+    if (!note.folder) return [];
+    return allNotes.filter((n) => n.folder === note.folder && n.id !== note.id);
+  }, [allNotes, note.folder, note.id]);
+
   const handleCopyLink = () => {
     const url = `${window.location.origin}${window.location.pathname}#/note/${note.slug}`;
     navigator.clipboard.writeText(url);
@@ -152,14 +177,6 @@ export const NoteView: React.FC<NoteViewProps> = ({
 
   return (
     <div className="w-full relative">
-      {/* Scroll-based reading progress bar indicator pinned to the top of content view */}
-      <ReadingProgressBar
-        targetRef={articleRef}
-        readingTimeMinutes={note.readingTimeMinutes}
-        title={note.title}
-        headings={note.headings}
-      />
-
       <article ref={articleRef} className="max-w-3xl mx-auto px-4 sm:px-8 py-8 sm:py-12">
       {/* Top Breadcrumb & Share Action */}
       <div 
@@ -180,7 +197,15 @@ export const NoteView: React.FC<NoteViewProps> = ({
           {note.folder ? (
             <>
               <span style={{ color: 'var(--border-main)' }}>/</span>
-              <span style={{ color: 'var(--text-main)' }}>{note.folder}</span>
+              <button
+                type="button"
+                onClick={() => onSelectFolder?.(note.folder)}
+                className="hover:underline cursor-pointer"
+                style={{ color: 'var(--text-main)' }}
+                title={`View all pages in ${note.folder}`}
+              >
+                {note.folder}
+              </button>
             </>
           ) : (
             <>
@@ -232,7 +257,7 @@ export const NoteView: React.FC<NoteViewProps> = ({
             </span>
           )}
           <h1 
-            className={`text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight leading-tight ${fontClass}`}
+            className={`text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight leading-tight ${fontClass}`}
             style={{ color: 'var(--text-heading)' }}
           >
             {note.title}
@@ -312,9 +337,70 @@ export const NoteView: React.FC<NoteViewProps> = ({
       {/* Main Markdown Body */}
       <div
         ref={contentRef}
-        className={`markdown-body text-base leading-relaxed ${fontClass}`}
+        className={`markdown-body ${fontClass}`}
         dangerouslySetInnerHTML={{ __html: note.html || note.content }}
       />
+
+      {/* Folder Subpages / Siblings Section */}
+      {note.folder && (
+        <section 
+          className="mt-12 p-4 sm:p-5 rounded-lg border"
+          style={{
+            backgroundColor: 'var(--card-main)',
+            borderColor: 'var(--border-main)',
+          }}
+        >
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Folder className="w-4 h-4" style={{ color: 'var(--accent)' }} />
+              <h3 
+                className="text-xs font-semibold uppercase tracking-wider font-mono"
+                style={{ color: 'var(--text-heading)' }}
+              >
+                In folder: {note.folder}
+              </h3>
+            </div>
+            <button
+              type="button"
+              onClick={() => onSelectFolder?.(note.folder)}
+              className="text-xs font-mono hover:underline flex items-center gap-1 cursor-pointer"
+              style={{ color: 'var(--accent)' }}
+            >
+              <span>View folder index</span>
+              <ArrowUpRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          {siblingNotes.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
+              {siblingNotes.map((sib) => (
+                <div
+                  key={sib.id}
+                  onClick={() => onSelectNote(sib.id)}
+                  className="p-2.5 rounded-md border text-xs cursor-pointer hover:opacity-85 transition-opacity flex items-center justify-between"
+                  style={{
+                    backgroundColor: 'var(--sidebar-main)',
+                    borderColor: 'var(--border-main)',
+                  }}
+                >
+                  <span className="truncate font-medium" style={{ color: 'var(--text-main)' }}>
+                    {sib.title}
+                  </span>
+                  {sib.readingTimeMinutes && (
+                    <span className="text-[10px] font-mono shrink-0 ml-2" style={{ color: 'var(--text-muted)' }}>
+                      {sib.readingTimeMinutes} min
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs font-mono" style={{ color: 'var(--text-muted)' }}>
+              This is the only document in {note.folder}/.
+            </p>
+          )}
+        </section>
+      )}
 
       {/* Linked References / Backlinks Section */}
       {config.navigation.showBacklinks && (

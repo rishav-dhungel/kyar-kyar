@@ -6,13 +6,13 @@ tags: [guides, markdown, wikilinks, callouts, syntax]
 description: Guide on using Obsidian-compatible wikilinks, frontmatter, callout admonitions, code blocks, and tags in kyar-kyar.
 ---
 
-# Markdown Syntax & Wikilinks 📝
+# Markdown Syntax & Wikilinks
 
 **kyar-kyar** supports standard CommonMark, GitHub-Flavored Markdown (GFM), and Obsidian-style extensions like `[[wikilinks]]` and `[!callouts]`.
 
 ---
 
-## 📄 Frontmatter
+## Frontmatter
 
 At the very top of each `.md` file, you can optionally include YAML frontmatter surrounded by triple dashes:
 
@@ -38,7 +38,7 @@ description: "A short synopsis used in previews and search cards."
 
 ---
 
-## 🔗 Wikilinks & Backlinks
+## Wikilinks & Backlinks
 
 You can connect documents using double square brackets:
 
@@ -54,7 +54,7 @@ When you link to another note, **kyar-kyar** automatically computes reciprocal b
 
 ---
 
-## 💬 Callouts / Admonitions
+## Callouts and Admonitions
 
 You can add stylized callout blocks using GitHub / Obsidian syntax:
 
@@ -79,7 +79,7 @@ You can add stylized callout blocks using GitHub / Obsidian syntax:
 
 ---
 
-## 🏷️ Tags
+## Tags
 
 Tags can be defined either in the YAML frontmatter:
 ```yaml

@@ -6,13 +6,13 @@ tags: [guides, local-development, testing, quickstart, nodejs]
 description: Step-by-step guide to installing dependencies, running the local dev server, testing wikilinks and tags, and previewing production builds locally.
 ---
 
-# Running and Testing kyar-kyar Locally 💻
+# Running and Testing kyar-kyar Locally
 
 This guide walks you through setting up, developing, testing, and verifying your **kyar-kyar** digital garden on your local computer.
 
 ---
 
-## 📋 Prerequisites
+## Prerequisites
 
 Before running the project, make sure you have the following installed on your system:
 
@@ -22,7 +22,7 @@ Before running the project, make sure you have the following installed on your s
 
 ---
 
-## 🚀 1. Quickstart (Under 2 Minutes)
+## 1. Quickstart
 
 Clone or navigate to your project directory:
 
@@ -44,11 +44,11 @@ http://localhost:3000
 ```
 
 > [!tip] Hot Module Replacement
-> The Vite development server automatically watches all `.md` files in `/content/` and `kyar-kyar.config.yaml`. Whenever you save edits, changes appear in your browser instantly without needing a full page reload!
+> The Vite development server automatically watches all `.md` files in `/content/` and `kyar-kyar.config.yaml`. Whenever you save edits, changes appear in your browser instantly without needing a full page reload.
 
 ---
 
-## 🛠️ 2. Key npm Scripts
+## 2. Key npm Scripts
 
 | Command | What it Does | When to Use |
 | :--- | :--- | :--- |
@@ -60,7 +60,7 @@ http://localhost:3000
 
 ---
 
-## 🔍 3. How to Test Your Site Locally
+## 3. How to Test Your Site Locally
 
 When writing notes and adjusting configuration, test the following key areas before publishing:
 
@@ -92,7 +92,7 @@ Vite will output a Network URL (e.g. `http://192.168.1.15:3000`). Open that URL 
 
 ---
 
-## 📦 4. Testing the Production Build Locally
+## 4. Testing the Production Build Locally
 
 Always test the compiled bundle locally before deploying to GitHub Pages or Cloudflare:
 
@@ -116,7 +116,7 @@ Open `http://localhost:3000` to verify that all assets load cleanly, routes reso
 
 ---
 
-## ❓ 5. Troubleshooting Common Local Issues
+## 5. Troubleshooting Common Local Issues
 
 ### Port 3000 is already in use
 If another application is using port 3000:
@@ -138,4 +138,4 @@ rm -rf node_modules package-lock.json
 npm install
 ```
 
-Now you're ready to write, test, and publish your digital garden with total confidence! Check out [[guides/hosting-on-github-and-cloudflare|Hosting on GitHub Pages & Cloudflare Pages]] when you're ready to go live.
+Now you're ready to write, test, and publish your digital garden with total confidence. Check out [[guides/hosting-on-github-and-cloudflare|Hosting on GitHub Pages & Cloudflare Pages]] when you're ready to go live.

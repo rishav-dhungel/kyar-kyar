@@ -6,13 +6,13 @@ tags: [guides, configuration, themes, styling, typography]
 description: Guide to customizing color palettes, typography styles, background patterns, and author profile details in kyar-kyar.config.yaml.
 ---
 
-# Theming & Customization 🎨
+# Theming & Customization
 
 All site-wide metadata, author information, visual themes, and layout placements are configured in a single YAML file located at the root of the project: `kyar-kyar.config.yaml`.
 
 ---
 
-## ⚙️ Configuration Reference
+## Configuration Reference
 
 Here is an annotated breakdown of available settings:
 
@@ -20,9 +20,9 @@ Here is an annotated breakdown of available settings:
 # Author Profile & Branding
 author: "Rishav Dhungel"
 tagline: "Software Engineer & Builder"
-bio: "Personal guides, technical documentation, and project architecture."
-avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80"
-title: "kyar-kyar Documentation & Guides"
+bio: "Technical documentation, operational guides, and architecture for kyar-kyar."
+avatarUrl: "https://github.com/rishav-dhungel.png"
+title: "kyar-kyar Guides & Documentation"
 baseUrl: "https://rishav-dhungel.github.io/kyar-kyar"
 
 # Theme & Appearance
@@ -56,7 +56,7 @@ social:
 
 ---
 
-## 🎨 Supported Color Palettes
+## Supported Color Palettes
 
 ### Dark Palettes
 - `nord`: Arctic, bluish-gray tones with cool pastel highlights.
@@ -73,11 +73,11 @@ social:
 
 ---
 
-## 📐 Sidebar Placement
+## Sidebar Placement
 
 You can choose where the sidebar docks:
 - `"left"`: Classic document tree layout on the left edge.
 - `"right"`: Right-hand sidebar dock.
 - `"popup"`: Drawer overlay mode that only appears when invoked.
 
-When reading notes, the sidebar automatically collapses to provide a distraction-free view, and can be hovered or toggled at any time using `⌘\` or the toggle button.
+When reading notes, the sidebar automatically collapses to provide a distraction-free view, and can be hovered or toggled at any time using `Cmd + \` or the toggle button.

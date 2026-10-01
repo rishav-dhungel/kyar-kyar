@@ -6,13 +6,13 @@ tags: [guides, getting-started, quickstart, overview]
 description: An introduction to kyar-kyar, project architecture, file structure, and how markdown files become a published digital garden.
 ---
 
-# Getting Started with kyar-kyar 🧭
+# Getting Started with kyar-kyar
 
 **kyar-kyar** is a minimalist, fast, and responsive digital garden static site generator built with React and Vite. It is designed for individuals who want to maintain notes, documentation, or technical guides using plain text Markdown without database overhead or complex CMS tools.
 
 ---
 
-## 🏗️ How It Works
+## How It Works
 
 1. **Content in `/content`**: All your notes live as plain `.md` files inside the `/content` folder.
 2. **Automatic Structure**:
@@ -28,7 +28,7 @@ description: An introduction to kyar-kyar, project architecture, file structure,
 
 ---
 
-## 📂 Project Structure
+## Project Structure
 
 ```text
 .
@@ -48,7 +48,7 @@ description: An introduction to kyar-kyar, project architecture, file structure,
 
 ---
 
-## ⚡ Quick Navigation
+## Quick Navigation
 
 - [[guides/running-and-testing-locally|Running and Testing Locally]] — Learn how to start the dev server, hot-reload notes, and test locally.
 - [[guides/markdown-and-wikilinks|Markdown Syntax & Wikilinks]] — Learn how to write frontmatter, format code, and link notes together.

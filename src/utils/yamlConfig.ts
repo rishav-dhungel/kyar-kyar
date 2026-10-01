@@ -241,12 +241,12 @@ export const DEFAULT_CONFIG_YAML = `# ==========================================
 # ==============================================================================
 
 # Personal Identity & Branding (Your Name, Face Photo & Tagline)
-author: "Vesper Novalis"
+author: "Kyar-Kyar"
 tagline: "Software Engineer, Writer & Thinker"
 bio: "Writing about distributed systems, book notes, reflections, and slow living."
-avatarUrl: "https://github.com/rishav-dhungel.png"
-title: "Vesper Novalis's Notes"
-baseUrl: "https://vespernovalis.github.io"
+avatarUrl: ""
+title: "Kyar-Kyar's Notes"
+baseUrl: "https://kyar-kyar.github.io"
 
 # Aesthetics & Theme Calibration
 theme:
@@ -307,10 +307,10 @@ navigation:
 
 # Social Links
 social:
-  github: "https://github.com/vespernovalis"
-  twitter: "https://x.com/vespernovalis"
-  linkedin: "https://linkedin.com/in/vespernovalis"
-  email: "vesper@example.com"
+  github: "https://github.com/kyar-kyar"
+  twitter: "https://x.com/kyar_kyar"
+  linkedin: "https://linkedin.com/in/kyarkyar"
+  email: "kyarkyar@example.com"
   rss: true
 
 # Site Footer
@@ -321,7 +321,7 @@ footer:
 export function parseYamlConfig(yamlString: string): SiteConfig {
   try {
     const raw = (load(yamlString) || {}) as Record<string, any>;
-    const author = raw.author || 'Vesper Novalis';
+    const author = raw.author || 'Kyar-Kyar';
     
     // Theme parsing
     const rawTheme = raw.theme || {};
@@ -346,7 +346,7 @@ export function parseYamlConfig(yamlString: string): SiteConfig {
       author,
       tagline: raw.tagline || 'Software Engineer, Writer & Thinker',
       bio: raw.bio || 'Writing about distributed systems, book notes, reflections, and slow living.',
-      avatarUrl: raw.avatarUrl || 'https://github.com/rishav-dhungel.png',
+      avatarUrl: raw.avatarUrl || '',
       title: raw.title || `${author}'s Notes`,
       baseUrl: raw.baseUrl || '',
       theme: {

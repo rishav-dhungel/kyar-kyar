@@ -6,14 +6,74 @@
     --font-serif: 'Lora', Georgia, Cambria, 'Times New Roman', Times, serif;
     --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     --font-mono: 'Fira Code', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    --font-active: var(--font-sans);
     --pattern-color: rgba(38, 139, 210, 0.08);
   }
 
-  body {
+  html, body, #root {
+    font-family: var(--font-active);
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
     background-color: var(--bg-main, #002b36);
     color: var(--text-main, #93a1a1);
   }
+
+  button, input, select, textarea, kbd {
+    font-family: inherit;
+  }
+}
+
+/* 
+ * UNIFORM TYPOGRAPHY ENFORCEMENT
+ * When the user sets fontFamily in YAML (mono, serif, or sans),
+ * all UI surfaces (sidebar, article, headings, metadata, cards, modals, tags)
+ * become strictly and beautifully uniform in that typeface!
+ */
+html[data-font="mono"],
+html[data-font="mono"] body,
+html[data-font="mono"] #root,
+html[data-font="mono"] * {
+  font-family: var(--font-mono) !important;
+}
+
+html[data-font="serif"],
+html[data-font="serif"] body,
+html[data-font="serif"] #root,
+html[data-font="serif"] h1,
+html[data-font="serif"] h2,
+html[data-font="serif"] h3,
+html[data-font="serif"] h4,
+html[data-font="serif"] h5,
+html[data-font="serif"] h6,
+html[data-font="serif"] p,
+html[data-font="serif"] article,
+html[data-font="serif"] span,
+html[data-font="serif"] a,
+html[data-font="serif"] button,
+html[data-font="serif"] input {
+  font-family: var(--font-serif);
+}
+
+html[data-font="sans"],
+html[data-font="sans"] body,
+html[data-font="sans"] #root,
+html[data-font="sans"] h1,
+html[data-font="sans"] h2,
+html[data-font="sans"] h3,
+html[data-font="sans"] h4,
+html[data-font="sans"] h5,
+html[data-font="sans"] h6,
+html[data-font="sans"] p,
+html[data-font="sans"] article,
+html[data-font="sans"] span,
+html[data-font="sans"] a,
+html[data-font="sans"] button,
+html[data-font="sans"] input {
+  font-family: var(--font-sans);
+}
+
+/* Code elements inside markdown retain monospace */
+pre, code, pre *, code *, .code-block, .code-block * {
+  font-family: var(--font-mono) !important;
 }
 
 /* Background Patterns & Textures */
@@ -108,8 +168,8 @@
 
 /* Markdown Rendering Engine */
 .markdown-body {
-  font-size: 1.05rem;
-  line-height: 1.78;
+  font-size: 0.95rem;
+  line-height: 1.68;
   color: var(--text-main);
 }
 
@@ -119,27 +179,27 @@
 .markdown-body h4 {
   color: var(--text-heading);
   font-weight: 700;
-  letter-spacing: -0.02em;
-  margin-top: 2rem;
-  margin-bottom: 0.75rem;
-  line-height: 1.3;
+  letter-spacing: -0.015em;
+  margin-top: 1.75rem;
+  margin-bottom: 0.65rem;
+  line-height: 1.35;
 }
 
 .markdown-body h1 {
-  font-size: 2rem;
+  font-size: 1.75rem;
   margin-top: 0;
-  padding-bottom: 0.5rem;
+  padding-bottom: 0.4rem;
   border-bottom: 1px solid var(--border-main);
 }
 
 .markdown-body h2 {
-  font-size: 1.45rem;
-  padding-bottom: 0.35rem;
+  font-size: 1.25rem;
+  padding-bottom: 0.3rem;
   border-bottom: 1px solid var(--border-main);
 }
 
 .markdown-body h3 {
-  font-size: 1.2rem;
+  font-size: 1.08rem;
 }
 
 .markdown-body p {

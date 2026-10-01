@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { NoteView } from './components/NoteView';
+import { FolderView } from './components/FolderView';
 import { SearchModal } from './components/SearchModal';
+import { OppositeProgressBar } from './components/OppositeProgressBar';
 import { NoteItem, SidebarPlacement } from './types';
 import { loadContentFromMarkdown } from './utils/contentLoader';
 import { buildFileTree, computeBacklinks } from './utils/fileTree';
@@ -96,7 +98,19 @@ export default function App() {
     root.style.setProperty('--accent', accent);
     root.style.setProperty('--code-bg', activePalette.codeBg);
     root.style.setProperty('--pattern-color', activePalette.patternColor);
-  }, [activePalette, isDark, config.theme.accentColor, config.theme.customColors, config.theme.lightPalette]);
+
+    // Apply global uniform font family matching YAML config
+    const fontChoice = config.theme.fontFamily || 'serif';
+    root.setAttribute('data-font', fontChoice);
+    const activeFont = 
+      fontChoice === 'mono' 
+        ? "var(--font-mono)" 
+        : fontChoice === 'serif' 
+        ? "var(--font-serif)" 
+        : "var(--font-sans)";
+    root.style.setProperty('--font-active', activeFont);
+    document.body.style.fontFamily = activeFont;
+  }, [activePalette, isDark, config.theme.accentColor, config.theme.customColors, config.theme.lightPalette, config.theme.fontFamily]);
 
   // 3. Notes State (Parsed dynamically from Markdown files in /content folder)
   const [notes] = useState<NoteItem[]>(() => {
@@ -123,9 +137,20 @@ export default function App() {
     return null;
   });
 
-  // Sync URL hash with active note or active tag
+  // Selected folder state with deep-link hash support
+  const [selectedFolder, setSelectedFolder] = useState<string | null>(() => {
+    if (typeof window !== 'undefined' && window.location.hash.startsWith('#/folder/')) {
+      return decodeURIComponent(window.location.hash.replace('#/folder/', ''));
+    }
+    return null;
+  });
+
+  // Sync URL hash with active note, folder, or active tag
   useEffect(() => {
-    if (selectedTag) {
+    if (selectedFolder) {
+      window.history.replaceState(null, '', `#/folder/${encodeURIComponent(selectedFolder)}`);
+      document.title = `${selectedFolder}/ — ${config.author}`;
+    } else if (selectedTag) {
       window.history.replaceState(null, '', `#/tag/${encodeURIComponent(selectedTag)}`);
       document.title = `#${selectedTag} — ${config.author}`;
     } else {
@@ -135,17 +160,23 @@ export default function App() {
         document.title = `${active.title} — ${config.author}`;
       }
     }
-  }, [selectedTag, activeNoteId, notes, config.author]);
+  }, [selectedFolder, selectedTag, activeNoteId, notes, config.author]);
 
   // Listen for browser back/forward buttons
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash;
-      if (hash.startsWith('#/tag/')) {
+      if (hash.startsWith('#/folder/')) {
+        const rawFolder = decodeURIComponent(hash.replace('#/folder/', ''));
+        setSelectedFolder(rawFolder);
+        setSelectedTag(null);
+      } else if (hash.startsWith('#/tag/')) {
         const rawTag = decodeURIComponent(hash.replace('#/tag/', ''));
         setSelectedTag(rawTag);
+        setSelectedFolder(null);
       } else if (hash.startsWith('#/note/')) {
         setSelectedTag(null);
+        setSelectedFolder(null);
         const target = hash.replace('#/note/', '');
         const match = resolveNote(target, notes);
         if (match) {
@@ -160,15 +191,63 @@ export default function App() {
 
   // Modals / Drawers State
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(() => {
-    if (config.theme.sidebarPlacement === 'popup') return false;
+  // Hover & Auto-hide mode state:
+  const [isAutoHideMode, setIsAutoHideMode] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
-      return window.innerWidth >= 768;
+      return localStorage.getItem('kyar_kyar_autohide_sidebar') === 'true';
     }
-    return true;
+    return false;
   });
-  const [isSidebarPinned, setIsSidebarPinned] = useState(true);
-  const isHoverPeekRef = React.useRef(false);
+
+  const [isHovered, setIsHovered] = useState(false);
+  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
+
+  // Track scroll depth to auto-collapse sidebar when scrolling down past 20%
+  // "pin or unpinned the side bar should collapse when the user is scrolling down like after 20% scrolling."
+  const [isScrolledPast20, setIsScrolledPast20] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      const currentScrollY = window.scrollY || document.documentElement.scrollTop;
+      const pct = docHeight > 0 
+        ? Math.min(100, Math.max(0, Math.round((currentScrollY / docHeight) * 100))) 
+        : 0;
+
+      // Collapse after 20% scrolling down; restore when scrolling back up near top (< 15%)
+      setIsScrolledPast20((prev) => {
+        if (pct >= 20) return true;
+        if (pct < 15) return false;
+        return prev;
+      });
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Whether the sidebar is in collapsed state (either user explicitly unpinned it, or scrolled past 20%)
+  const isEffectiveCollapsed = isAutoHideMode || isScrolledPast20;
+
+  // When in collapsed state: sidebar expands only when hovered.
+  // Otherwise: sidebar remains docked open (unless popup mode).
+  const isSidebarOpen = isEffectiveCollapsed 
+    ? isHovered 
+    : (config.theme.sidebarPlacement === 'popup' ? isMobileDrawerOpen : true);
+
+  const toggleAutoHideMode = () => {
+    setIsAutoHideMode((prev) => {
+      const next = !prev;
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('kyar_kyar_autohide_sidebar', String(next));
+      }
+      if (!next) {
+        setIsHovered(false);
+      }
+      return next;
+    });
+  };
 
   // Global keyboard shortcuts (Cmd+K / Ctrl+K for search, Cmd+\ or Ctrl+\ or Cmd+B for sidebar toggle)
   useEffect(() => {
@@ -179,77 +258,24 @@ export default function App() {
       }
       if ((e.metaKey || e.ctrlKey) && (e.key === '\\' || e.key.toLowerCase() === 'b')) {
         e.preventDefault();
-        setIsSidebarOpen((prev) => {
-          const next = !prev;
-          setIsSidebarPinned(next);
-          isHoverPeekRef.current = false;
-          return next;
-        });
+        toggleAutoHideMode();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // Auto-hide sidebar when user starts reading (scrolling down into note)
-  useEffect(() => {
-    let lastScrollY = window.scrollY || document.documentElement.scrollTop;
-
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY || document.documentElement.scrollTop;
-
-      // When the user starts reading and scrolls down into content:
-      // Immediately disappear the sidebar for distraction-free reading
-      if (currentScrollY > 30 && currentScrollY > lastScrollY + 5) {
-        setIsSidebarOpen(false);
-        setIsSidebarPinned(false);
-        isHoverPeekRef.current = false;
-      }
-
-      lastScrollY = currentScrollY;
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  // Hover effect: when sidebar is closed, hovering near the screen edge peeks it open
-  const handleEdgeHover = () => {
-    if (!isSidebarOpen) {
-      setIsSidebarOpen(true);
-      isHoverPeekRef.current = true;
-    }
-  };
-
-  // If user peeked via hover without clicking, moving the mouse away hides it
+  // When mouse leaves sidebar in auto-hide or scroll-collapsed mode, collapse it back smoothly
   const handleSidebarMouseLeave = () => {
-    if (isHoverPeekRef.current && !isSidebarPinned) {
-      setIsSidebarOpen(false);
-      isHoverPeekRef.current = false;
+    if (isEffectiveCollapsed) {
+      setIsHovered(false);
     }
   };
 
-  // When clicked on sidebar, it remains open (pinned) so it doesn't disappear on mouse move
-  const handleSidebarClick = () => {
-    setIsSidebarPinned(true);
-    isHoverPeekRef.current = false;
-  };
-
-  // Explicit close (X button or backdrop)
+  // Close mobile/popup drawer
   const handleCloseSidebar = () => {
-    setIsSidebarOpen(false);
-    setIsSidebarPinned(false);
-    isHoverPeekRef.current = false;
-  };
-
-  const handleToggleSidebar = () => {
-    if (isSidebarOpen) {
-      handleCloseSidebar();
-    } else {
-      setIsSidebarOpen(true);
-      setIsSidebarPinned(true);
-      isHoverPeekRef.current = false;
-    }
+    setIsHovered(false);
+    setIsMobileDrawerOpen(false);
   };
 
   // Compute File Tree (Roots outside folders & Folders)
@@ -326,39 +352,43 @@ export default function App() {
       style={{
         backgroundColor: 'var(--bg-main)',
         color: 'var(--text-main)',
+        fontFamily: 'var(--font-active)',
       }}
     >
-      {/* Floating Sidebar Toggle Button when sidebar is closed */}
-      {!isSidebarOpen && (
+      {/* Floating Sidebar Toggle Button when in auto-hide mode or scroll-collapsed and not currently hovered */}
+      {isEffectiveCollapsed && !isHovered && (
         <div 
           className={`fixed top-3 ${placement === 'right' ? 'right-3' : 'left-3'} z-40`}
-          onMouseEnter={handleEdgeHover}
+          onMouseEnter={() => setIsHovered(true)}
         >
           <button
             type="button"
-            onClick={handleToggleSidebar}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border shadow-md backdrop-blur-md transition-all hover:scale-105 active:scale-95 cursor-pointer focus:outline-none"
+            onClick={() => {
+              if (isAutoHideMode) {
+                toggleAutoHideMode();
+              } else {
+                setIsHovered(true);
+              }
+            }}
+            className="p-2 rounded-lg border shadow-md backdrop-blur-md transition-all hover:scale-105 active:scale-95 cursor-pointer focus:outline-none flex items-center justify-center"
             style={{
               backgroundColor: 'var(--card-main)',
               borderColor: 'var(--border-main)',
-              color: 'var(--text-heading)',
+              color: 'var(--accent)',
             }}
-            title="Open sidebar (⌘\ or hover here)"
-            aria-label="Open sidebar"
+            title={isAutoHideMode ? "Hover to reveal sidebar / Click to pin open" : "Sidebar collapsed for reading / Hover to reveal"}
+            aria-label="Sidebar collapse mode active"
           >
             {placement === 'right' ? <PanelRight className="w-4 h-4" /> : <PanelLeft className="w-4 h-4" />}
-            <span className="text-xs font-mono font-medium hidden sm:inline" style={{ color: 'var(--text-muted)' }}>
-              Sidebar
-            </span>
           </button>
         </div>
       )}
 
-      {/* Subtle edge hover zone to bring the sidebar back on hover only when reading */}
-      {!isSidebarOpen && (
+      {/* Screen edge hover detector to bring back sidebar when hovered */}
+      {isEffectiveCollapsed && !isHovered && (
         <div 
-          className={`fixed top-0 bottom-0 ${placement === 'right' ? 'right-0' : 'left-0'} w-4 sm:w-6 z-30 cursor-pointer pointer-events-auto`}
-          onMouseEnter={handleEdgeHover}
+          className={`fixed top-0 bottom-0 ${placement === 'right' ? 'right-0' : 'left-0'} w-5 sm:w-7 z-30 cursor-pointer pointer-events-auto`}
+          onMouseEnter={() => setIsHovered(true)}
           title="Hover to reveal sidebar"
         />
       )}
@@ -373,31 +403,78 @@ export default function App() {
           activeNoteId={activeNoteId}
           onSelectNote={(id) => {
             setActiveNoteId(id);
+            setSelectedFolder(null);
             setSelectedTag(null);
-            setIsSidebarPinned(true);
+            if (isEffectiveCollapsed) {
+              setIsHovered(false);
+            }
           }}
           selectedTag={selectedTag}
           onSelectTag={(tag) => {
             setSelectedTag(tag);
-            setIsSidebarPinned(true);
+            setSelectedFolder(null);
+            if (isEffectiveCollapsed) {
+              setIsHovered(false);
+            }
           }}
+          selectedFolder={selectedFolder}
+          onSelectFolder={(folder) => {
+            setSelectedFolder(folder);
+            setSelectedTag(null);
+            if (isEffectiveCollapsed) {
+              setIsHovered(false);
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
+          isAutoHideMode={isAutoHideMode}
+          isCollapsed={isEffectiveCollapsed}
+          onToggleAutoHide={toggleAutoHideMode}
+          activeNote={selectedFolder || selectedTag ? null : activeNote}
           isOpen={isSidebarOpen}
           onClose={handleCloseSidebar}
           placement={placement}
           onChangePlacement={handlePlacementChange}
           onOpenSearch={() => {
             setIsSearchOpen(true);
-            setIsSidebarPinned(true);
           }}
           isDark={isDark}
           onToggleColorMode={handleToggleColorMode}
-          onSidebarClick={handleSidebarClick}
+          onSidebarClick={() => {}}
           onMouseLeave={handleSidebarMouseLeave}
         />
 
         {/* Content Container */}
-        <main className={`flex-1 min-w-0 pb-16 transition-all duration-200 ${placement === 'popup' || !isSidebarOpen ? 'max-w-4xl mx-auto w-full' : ''}`}>
-          {selectedTag ? (
+        <main className={`flex-1 min-w-0 pb-16 transition-all duration-200 ${placement === 'popup' || isEffectiveCollapsed ? 'max-w-4xl mx-auto w-full' : ''}`}>
+          {selectedFolder ? (
+            /* Automatically generated Folder Subpages Index View */
+            <FolderView
+              folderPath={selectedFolder}
+              notes={notes}
+              config={config}
+              onSelectNote={(id) => {
+                setActiveNoteId(id);
+                setSelectedFolder(null);
+                setSelectedTag(null);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              onSelectFolder={(folder) => {
+                setSelectedFolder(folder);
+                setSelectedTag(null);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              onSelectTag={(tag) => {
+                setSelectedTag(tag);
+                setSelectedFolder(null);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              onBackToHome={() => {
+                setSelectedFolder(null);
+                const home = notes.find((n) => n.filePath === 'index.md');
+                if (home) setActiveNoteId(home.id);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+            />
+          ) : selectedTag ? (
             /* Tag / Topic Results View */
             <div className="max-w-3xl mx-auto px-4 sm:px-8 py-10">
               <div 
@@ -418,7 +495,7 @@ export default function App() {
                 </div>
                 <button
                   onClick={() => setSelectedTag(null)}
-                  className="text-xs hover:underline"
+                  className="text-xs hover:underline cursor-pointer"
                   style={{ color: 'var(--accent)' }}
                 >
                   Clear Tag Filter
@@ -432,6 +509,7 @@ export default function App() {
                     onClick={() => {
                       setActiveNoteId(note.id);
                       setSelectedTag(null);
+                      setSelectedFolder(null);
                     }}
                     className="p-4 rounded-lg border cursor-pointer transition-all hover:opacity-90"
                     style={{
@@ -462,7 +540,7 @@ export default function App() {
                       className="flex items-center gap-2 mt-2 text-[10px] font-mono flex-wrap"
                       style={{ color: 'var(--text-muted)' }}
                     >
-                      {note.folder ? <span>📂 {note.folder}</span> : <span>📄 Standalone page</span>}
+                      {note.folder ? <span>folder: {note.folder}</span> : <span>root page</span>}
                       <span>·</span>
                       <span>{note.readingTimeMinutes} min read</span>
                       {note.tags.length > 0 && (
@@ -476,8 +554,9 @@ export default function App() {
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   setSelectedTag(t);
+                                  setSelectedFolder(null);
                                 }}
-                                className="px-1.5 py-0.5 rounded text-[10px] font-mono border hover:opacity-80 transition-opacity"
+                                className="px-1.5 py-0.5 rounded text-[10px] font-mono border hover:opacity-80 transition-opacity cursor-pointer"
                                 style={{
                                   backgroundColor: 'var(--bg-main)',
                                   borderColor: 'var(--border-main)',
@@ -500,8 +579,21 @@ export default function App() {
               note={activeNote}
               allNotes={notes}
               config={config}
-              onSelectNote={setActiveNoteId}
-              onSelectTag={setSelectedTag}
+              onSelectNote={(id) => {
+                setActiveNoteId(id);
+                setSelectedFolder(null);
+                setSelectedTag(null);
+              }}
+              onSelectFolder={(folder) => {
+                setSelectedFolder(folder);
+                setSelectedTag(null);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              onSelectTag={(tag) => {
+                setSelectedTag(tag);
+                setSelectedFolder(null);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
               prevNote={prevNote}
               nextNote={nextNote}
             />
@@ -516,6 +608,15 @@ export default function App() {
         </main>
       </div>
 
+      {/* Reading Progress Indicator opposite of the sidebar */}
+      {!selectedFolder && !selectedTag && activeNote && (
+        <OppositeProgressBar
+          sidebarPlacement={placement}
+          headings={activeNote.headings}
+          title={activeNote.title}
+        />
+      )}
+
       {/* Instant Search Modal (Cmd+K) */}
       <SearchModal
         notes={notes}
@@ -524,8 +625,12 @@ export default function App() {
         onSelectNote={(id) => {
           setActiveNoteId(id);
           setSelectedTag(null);
+          setSelectedFolder(null);
         }}
-        onSelectTag={setSelectedTag}
+        onSelectTag={(tag) => {
+          setSelectedTag(tag);
+          setSelectedFolder(null);
+        }}
       />
     </div>
   );
