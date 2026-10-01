@@ -65,7 +65,7 @@ http://localhost:3000
 When writing notes and adjusting configuration, test the following key areas before publishing:
 
 ### A. Testing Navigation & Wikilinks
-- Click internal wikilinks (e.g. `[[about]]`, `[[journal/2026-09-29-morning-reflections]]`) to verify they navigate smoothly to the destination note.
+- Click internal wikilinks (e.g. `[[guides/getting-started]]`, `[[guides/hosting-on-github-and-cloudflare]]`) to verify they navigate smoothly to the destination note.
 - Check the **Linked References (Backlinks)** section at the bottom of notes to verify reciprocal connections appear automatically.
 
 ### B. Testing Tags & Topic Filtering

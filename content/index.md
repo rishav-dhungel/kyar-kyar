@@ -1,44 +1,40 @@
 ---
-title: Welcome to My Garden & Blog
-date: "2026-09-29"
+title: "Guides & Documentation"
+date: "2026-09-30"
 pinned: true
-tags: [welcome, digital-garden, personal]
-description: Welcome to Rishav Dhungel's personal blog and digital garden. Markdown files organized into folders or standalone pages.
+tags: [guides, documentation, index, overview]
+description: Technical guides and documentation for kyar-kyar.
 ---
 
-# Welcome to My Garden & Blog 🌱
+# Guides & Documentation 📖
 
-Hello! I'm **Rishav Dhungel**. This is my personal corner of the internet where I publish essays, daily journal entries, reading reflections, and technical notes.
-
-Unlike traditional CMS-heavy websites with bulky admin dashboards and databases, this entire site is **compiled directly from plain Markdown files** on my computer.
-
-> [!tip] How This Site Works
-> - **Files outside folders** (like this \`index.md\` or [[about|About Me]]) appear as top-level pages.
-> - **Files inside folders** (like \`journal/\`, \`thoughts/\`, \`reading-notes/\`) automatically create expandable folder categories in the sidebar.
-> - **Internal Links** connect ideas together using simple \`[[wikilinks]]\`.
+Welcome to the **kyar-kyar** guides repository. This site contains documentation and operational guides for setting up, configuring, writing in, and deploying the kyar-kyar digital garden and static documentation engine.
 
 ---
 
-## 🗂️ Explore by Section
+## 📚 Available Guides
 
-Feel free to browse through the folders on the left:
+Browse through the guides below or use the sidebar on the left:
 
-- 👤 [[about|About Me]] — Who I am, what I build, and my background.
-- 📓 **Journal**:
-  - [[journal/2026-09-29-morning-reflections|Morning Reflections & Quiet Hours]]
-  - [[journal/2026-09-28-gratitude-and-focus|Gratitude, Momentum, and Sleep]]
-- 💡 **Thoughts & Essays**:
-  - [[thoughts/digital-gardening-vs-chronological-blogs|Digital Gardening vs. Chronological Blogs]]
-  - [[thoughts/building-second-brain|Building a Second Brain with Plain Text]]
-- 📚 **Reading Notes**:
-  - [[reading-notes/atomic-habits-takeaways|Atomic Habits by James Clear]]
-  - [[reading-notes/show-your-work|Show Your Work! by Austin Kleon]]
-- 🚀 **Guides & Open Source**:
-  - [[guides/running-and-testing-locally|Running & Testing kyar-kyar Locally]]
-  - [[guides/hosting-on-github-and-cloudflare|Hosting on GitHub Pages & Cloudflare Pages]]
+### 1. [[guides/getting-started|Getting Started]]
+An overview of the project architecture, directory structure, and how markdown files in `/content` are transformed into a responsive static site.
+
+### 2. [[guides/running-and-testing-locally|Running and Testing Locally]]
+How to install dependencies, run the Vite development server with hot-reload, execute type checks (`npm run lint`), and preview production builds locally.
+
+### 3. [[guides/markdown-and-wikilinks|Markdown Syntax & Wikilinks]]
+Reference for YAML frontmatter options, bidirectional `[[wikilinks]]`, automatic backlinks, callout admonitions (`[!tip]`, `[!note]`), and tag filtering.
+
+### 4. [[guides/theming-and-customization|Theming & Customization]]
+How to configure color palettes (Nord, Tokyo Night, Catppuccin, Solarized), typography, background patterns, and layout options in `kyar-kyar.config.yaml`.
+
+### 5. [[guides/hosting-on-github-and-cloudflare|Hosting on GitHub Pages & Cloudflare Pages]]
+Step-by-step instructions for deploying your notes using automated GitHub Actions CI/CD or Cloudflare Pages edge hosting.
 
 ---
 
-## 🛠️ Open Source & Customization
+## 🔍 Navigation Shortcuts
 
-This site is powered by **kyar-kyar** and is 100% open source. Anyone can fork or clone this repository, add their own Markdown files directly inside the \`/content/\` folder, customize \`kyar-kyar.config.yaml\` with their own name, photo, and tagline, and host it on GitHub Pages, Cloudflare Pages, Netlify, or your own server.
+- **Search:** Press <kbd>Cmd</kbd> + <kbd>K</kbd> (Mac) or <kbd>Ctrl</kbd> + <kbd>K</kbd> (Windows/Linux) to search across all guides and notes.
+- **Sidebar Toggle:** Press <kbd>Cmd</kbd> + <kbd>\</kbd> or <kbd>Ctrl</kbd> + <kbd>\</kbd> to toggle the sidebar.
+- **Reading Mode:** When you scroll down into any guide, the sidebar automatically collapses for focused reading.
