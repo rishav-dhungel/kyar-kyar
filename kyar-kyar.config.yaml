@@ -1,0 +1,81 @@
+# ==============================================================================
+# kyar-kyar — Personal Blog & Digital Garden Configuration
+# Fully vibe coded website generator configured entirely via this YAML file
+# ==============================================================================
+
+# Personal Identity & Branding (Your Name, Face Photo & Tagline)
+author: "Rishav Dhungel"
+tagline: "Software Engineer, Writer & Thinker"
+bio: "Writing about systems, daily reflections, book notes, and slow living."
+avatarUrl: "https://github.com/rishav-dhungel.png"
+title: "Rishav Dhungel's Garden"
+baseUrl: "https://rishav-dhungel.github.io/kyar-kyar"
+
+# Aesthetics & Theme Calibration
+theme:
+  # Master palette or default dark mode palette
+  palette: "nord"
+
+  # Light Mode Color Scheme:
+  # Uses the previous clean warm stone paper color scheme ("classic-light")
+  # Options: "classic-light", "solarized-light", "gruvbox-light"
+  lightPalette: "classic-light"
+
+  # Dark Mode Color Scheme:
+  # Calibrated Nord Dark (Arctic Ice Studio polar night palette)
+  # Options: "nord", "tokyo-night", "rose-pine", "kanagawa", "everforest", "catppuccin", "solarized-dark", "gruvbox-dark", "monokai-pro", "classic-dark"
+  darkPalette: "nord"
+
+  # Default initial color mode on visit: "dark", "light", or "system"
+  colorMode: "dark"
+
+  # Sidebar Placement:
+  # Options:
+  #   - "left"  : Docked to the left side
+  #   - "right" : Docked to the right side
+  #   - "popup" : Clean distraction-free view with toggleable slide-over drawer
+  sidebarPlacement: "left"
+
+  # Background Texture Pattern:
+  # Options: "dots", "grid", "lines", "crosshatch", "blueprint", "noise", "none"
+  backgroundPattern: "dots"
+
+  # Typography: "serif" (literary book), "sans" (modern clean), "mono" (technical)
+  fontFamily: "mono"
+
+  # Accent Highlight Color (Optional hex color, e.g. #64b5f6 for calibrated Frost blue)
+  accentColor: "#64b5f6"
+
+  # Granular Hex Overrides (Optional — you can override any specific color directly in YAML):
+  # customColors:
+  #   lightBg: "#fbfbfa"
+  #   lightSidebar: "#f7f7f6"
+  #   lightCard: "#ffffff"
+  #   lightBorder: "#e5e5e4"
+  #   lightText: "#1c1917"
+  #   darkBg: "#002b36"
+  #   darkSidebar: "#073642"
+  #   darkCard: "#00212b"
+  #   darkBorder: "#0e4e5e"
+  #   darkText: "#93a1a1"
+
+# Navigation & Reading Features
+navigation:
+  showFolderCounts: true
+  showTableOfContents: true
+  showBacklinks: true
+  showReadingTime: true
+  showWordCount: true
+  defaultExpandedFolders: true
+
+# Social Links
+social:
+  github: "https://github.com/rishav-dhungel"
+  twitter: "https://x.com"
+  linkedin: "https://linkedin.com"
+  email: "rishavdhungel3@gmail.com"
+  rss: true
+
+# Site Footer
+footer:
+  text: "powered by kyar-kyar fully vibe coded website generator"

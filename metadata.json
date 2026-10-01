@@ -1,0 +1,6 @@
+{
+  "name": "justnote",
+  "description": "An open-source personal blog and digital garden static site generator. Powered by justnote fully vibe coded website generator.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
