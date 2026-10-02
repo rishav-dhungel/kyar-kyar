@@ -5,11 +5,9 @@ import {
   FileText, 
   ChevronDown, 
   ChevronRight, 
-  Pin, 
-  PinOff,
   Github, 
   Twitter, 
-  Linkedin,
+  Linkedin, 
   Mail, 
   X,
   Compass,
@@ -21,6 +19,7 @@ import {
   Search,
   Moon,
   Sun,
+  Pin,
 } from 'lucide-react';
 import { FileTreeNode, FolderNode, NoteFileNode, NoteItem, SiteConfig, SidebarPlacement } from '../types';
 
@@ -35,9 +34,8 @@ interface SidebarProps {
   onSelectTag: (tag: string | null) => void;
   selectedFolder?: string | null;
   onSelectFolder?: (folderPath: string) => void;
-  isAutoHideMode: boolean;
-  isCollapsed?: boolean;
-  onToggleAutoHide: () => void;
+  isCollapsed: boolean;
+  onToggleCollapse: () => void;
   isOpen: boolean;
   onClose: () => void;
   placement: SidebarPlacement;
@@ -45,8 +43,6 @@ interface SidebarProps {
   onOpenSearch: () => void;
   isDark: boolean;
   onToggleColorMode: () => void;
-  onSidebarClick?: () => void;
-  onMouseLeave?: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -60,9 +56,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onSelectTag,
   selectedFolder,
   onSelectFolder,
-  isAutoHideMode,
   isCollapsed,
-  onToggleAutoHide,
+  onToggleCollapse,
   isOpen,
   onClose,
   placement,
@@ -70,8 +65,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onOpenSearch,
   isDark,
   onToggleColorMode,
-  onSidebarClick,
-  onMouseLeave,
 }) => {
   const isPopup = placement === 'popup';
   const isRight = placement === 'right';
@@ -235,35 +228,33 @@ export const Sidebar: React.FC<SidebarProps> = ({
     );
   };
 
-  // Determine slide-in / dock classes based on placement, isAutoHideMode, and isOpen state
-  const isEffectiveAutoHide = isCollapsed !== undefined ? isCollapsed : isAutoHideMode;
-
+  // Normal flow positioning:
+  // - If popup mode: overlay drawer on all screens
+  // - If left or right:
+  //     - On Mobile (<768px): fixed slide-in drawer controlled by isOpen
+  //     - On Desktop (>=768px): docked in normal page flow (sticky top-0 h-screen). If isCollapsed, width is 0.
   let positioningClasses = '';
   if (isPopup) {
-    positioningClasses = `fixed top-0 bottom-0 z-50 w-72 lg:w-80 shadow-2xl transition-transform duration-200 ease-out will-change-transform ${
+    positioningClasses = `fixed top-0 bottom-0 z-50 w-72 sm:w-80 shadow-2xl transition-transform duration-200 ease-out will-change-transform ${
       isOpen ? 'left-0 translate-x-0' : 'left-0 -translate-x-full pointer-events-none'
     }`;
   } else if (isRight) {
-    positioningClasses = isEffectiveAutoHide
-      ? `fixed top-0 bottom-0 right-0 z-50 h-screen w-72 lg:w-80 border-l shadow-2xl transition-transform duration-200 ease-out will-change-transform ${
-          isOpen ? 'translate-x-0 pointer-events-auto' : 'translate-x-full pointer-events-none'
-        }`
-      : `fixed md:sticky top-0 bottom-0 z-40 md:z-20 h-screen shrink-0 transition-opacity duration-150 ${
-          isOpen 
-            ? 'right-0 translate-x-0 w-72 lg:w-80 border-l opacity-100' 
-            : 'right-0 translate-x-full md:translate-x-0 w-0 md:w-0 border-transparent opacity-0 pointer-events-none overflow-hidden'
-        }`;
+    const mobileDrawer = `fixed top-0 bottom-0 right-0 z-50 w-72 sm:w-80 h-screen shadow-2xl transition-transform duration-200 ease-out will-change-transform ${
+      isOpen ? 'translate-x-0' : 'translate-x-full pointer-events-none'
+    }`;
+    const desktopDock = isCollapsed
+      ? 'md:sticky md:top-0 md:h-screen md:shrink-0 md:w-0 md:border-none md:overflow-hidden md:pointer-events-none md:opacity-0 md:translate-x-0 md:shadow-none'
+      : 'md:sticky md:top-0 md:h-screen md:shrink-0 md:w-72 lg:md:w-80 md:border-l md:opacity-100 md:pointer-events-auto md:translate-x-0 md:shadow-none';
+    positioningClasses = `${mobileDrawer} ${desktopDock} transition-all duration-200`;
   } else {
-    // Left placement
-    positioningClasses = isEffectiveAutoHide
-      ? `fixed top-0 bottom-0 left-0 z-50 h-screen w-72 lg:w-80 border-r shadow-2xl transition-transform duration-200 ease-out will-change-transform ${
-          isOpen ? 'translate-x-0 pointer-events-auto' : '-translate-x-full pointer-events-none'
-        }`
-      : `fixed md:sticky top-0 bottom-0 z-40 md:z-20 h-screen shrink-0 transition-opacity duration-150 ${
-          isOpen 
-            ? 'left-0 translate-x-0 w-72 lg:w-80 border-r opacity-100' 
-            : 'left-0 -translate-x-full md:translate-x-0 w-0 md:w-0 border-transparent opacity-0 pointer-events-none overflow-hidden'
-        }`;
+    // Left placement (default)
+    const mobileDrawer = `fixed top-0 bottom-0 left-0 z-50 w-72 sm:w-80 h-screen shadow-2xl transition-transform duration-200 ease-out will-change-transform ${
+      isOpen ? 'translate-x-0' : '-translate-x-full pointer-events-none'
+    }`;
+    const desktopDock = isCollapsed
+      ? 'md:sticky md:top-0 md:h-screen md:shrink-0 md:w-0 md:border-none md:overflow-hidden md:pointer-events-none md:opacity-0 md:translate-x-0 md:shadow-none'
+      : 'md:sticky md:top-0 md:h-screen md:shrink-0 md:w-72 lg:md:w-80 md:border-r md:opacity-100 md:pointer-events-auto md:translate-x-0 md:shadow-none';
+    positioningClasses = `${mobileDrawer} ${desktopDock} transition-all duration-200`;
   }
 
   return (
@@ -272,7 +263,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {isOpen && (
         <div 
           className={`fixed inset-0 bg-black/50 backdrop-blur-xs transition-opacity ${
-            isPopup ? 'z-45 block' : 'z-35 md:hidden'
+            isPopup ? 'z-45 block' : 'z-45 md:hidden'
           }`}
           onClick={(e) => {
             e.stopPropagation();
@@ -282,11 +273,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
       )}
 
       <aside 
-        onClick={(e) => {
-          e.stopPropagation();
-          onSidebarClick?.();
-        }}
-        onMouseLeave={onMouseLeave}
         className={`${positioningClasses} flex flex-col`}
         style={{
           backgroundColor: 'var(--sidebar-main)',
@@ -294,7 +280,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           color: 'var(--text-main)',
         }}
       >
-        <div className="w-72 lg:w-80 flex flex-col h-full min-h-0">
+        <div className="w-72 sm:w-72 lg:w-80 flex flex-col h-full min-h-0">
         {/* Top Header / Author Profile (Covering top of screen) */}
         <div 
           className="p-5 border-b"
@@ -473,24 +459,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
             )}
           </button>
 
-          {/* Pin / Collapse Toggle Button beside theme toggle */}
+          {/* Collapse Toggle Button (for desktop reading mode) */}
           <button
             type="button"
-            onClick={onToggleAutoHide}
+            onClick={onToggleCollapse}
             className="p-2 rounded-lg border hover:opacity-85 transition-all cursor-pointer shrink-0 flex items-center justify-center shadow-xs"
             style={{
-              backgroundColor: isAutoHideMode ? 'color-mix(in srgb, var(--accent) 18%, transparent)' : 'var(--card-main)',
-              borderColor: isAutoHideMode ? 'var(--accent)' : 'var(--border-main)',
-              color: isAutoHideMode ? 'var(--accent)' : 'var(--text-heading)',
+              backgroundColor: 'var(--card-main)',
+              borderColor: 'var(--border-main)',
+              color: 'var(--text-heading)',
             }}
-            title={isAutoHideMode ? "Sidebar in hover peek mode (Click to pin open)" : "Pin open (Click to collapse & reveal on hover)"}
-            aria-label="Toggle pin sidebar"
+            title={isRight ? "Collapse sidebar (Cmd+\\)" : "Collapse sidebar (Cmd+\\)"}
+            aria-label="Collapse sidebar"
           >
-            {isAutoHideMode ? (
-              <PinOff className="w-4 h-4" />
-            ) : (
-              <Pin className="w-4 h-4" />
-            )}
+            {isRight ? <PanelRightClose className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
           </button>
         </div>
 

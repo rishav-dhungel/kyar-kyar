@@ -13,7 +13,7 @@ import {
   parseYamlConfig 
 } from './utils/yamlConfig';
 import rawYamlConfig from '../kyar-kyar.config.yaml?raw';
-import { Tag, PanelLeft, PanelRight } from 'lucide-react';
+import { Tag, PanelLeft, PanelRight, Search, Sun, Moon } from 'lucide-react';
 
 export default function App() {
   // 1. Config parsed directly from kyar-kyar.config.yaml (no localstorage override)
@@ -217,73 +217,31 @@ export default function App() {
 
   // Modals / Drawers State
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  // Hover & Auto-hide mode state (defaults to false so sidebar loads open and visible!)
-  const [isAutoHideMode, setIsAutoHideMode] = useState<boolean>(false);
-  const [isHovered, setIsHovered] = useState(false);
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
 
-  // Track scroll depth to auto-collapse sidebar when scrolling down past 25% on long content
-  const [isScrolledPast20, setIsScrolledPast20] = useState(false);
+  // Desktop sidebar collapse state (defaults to false: always docked & visible in normal flow)
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('kyar_kyar_sidebar_collapsed') === 'true';
+    }
+    return false;
+  });
 
-  useEffect(() => {
-    let rafId: number | null = null;
-    const handleScroll = () => {
-      if (rafId !== null) return;
-      rafId = requestAnimationFrame(() => {
-        rafId = null;
-        const currentScrollY = window.scrollY || document.documentElement.scrollTop;
-        const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-
-        // Keep sidebar open near top of page (first 250px)
-        if (currentScrollY < 250) {
-          setIsScrolledPast20(false);
-          return;
-        }
-
-        const pct = docHeight > 0 
-          ? Math.min(100, Math.max(0, Math.round((currentScrollY / docHeight) * 100))) 
-          : 0;
-
-        // Collapse after 25% scrolling down AND more than 250px down
-        if (pct >= 25) {
-          setIsScrolledPast20(true);
-        } else if (pct < 15) {
-          setIsScrolledPast20(false);
-        }
-      });
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-      if (rafId !== null) cancelAnimationFrame(rafId);
-    };
-  }, []);
-
-  // Whether the sidebar is in collapsed state (either user explicitly unpinned it, or scrolled past 25%)
-  const isEffectiveCollapsed = isAutoHideMode || isScrolledPast20;
-
-  // When in collapsed state: sidebar expands only when hovered.
-  // When in popup mode: opens via isMobileDrawerOpen.
-  // Otherwise: sidebar remains docked open and visible on load!
-  const isSidebarOpen = isEffectiveCollapsed 
-    ? isHovered 
-    : (placement === 'popup' ? isMobileDrawerOpen : true);
-
-  const toggleAutoHideMode = () => {
-    setIsAutoHideMode((prev) => {
+  const toggleSidebarCollapse = () => {
+    setIsSidebarCollapsed((prev) => {
       const next = !prev;
       if (typeof window !== 'undefined') {
-        localStorage.setItem('kyar_kyar_autohide_sidebar', String(next));
-      }
-      if (!next) {
-        setIsHovered(false);
+        localStorage.setItem('kyar_kyar_sidebar_collapsed', String(next));
       }
       return next;
     });
   };
 
-  // Global keyboard shortcuts (Cmd+K / Ctrl+K for search, Cmd+\ or Ctrl+\ or Cmd+B for sidebar toggle)
+  const handleCloseSidebar = () => {
+    setIsMobileDrawerOpen(false);
+  };
+
+  // Global keyboard shortcuts (Cmd+K / Ctrl+K for search, Cmd+\ or Ctrl+\ for sidebar toggle)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
@@ -292,25 +250,16 @@ export default function App() {
       }
       if ((e.metaKey || e.ctrlKey) && (e.key === '\\' || e.key.toLowerCase() === 'b')) {
         e.preventDefault();
-        toggleAutoHideMode();
+        if (placement === 'popup' || (typeof window !== 'undefined' && window.innerWidth < 768)) {
+          setIsMobileDrawerOpen((prev) => !prev);
+        } else {
+          toggleSidebarCollapse();
+        }
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
-
-  // When mouse leaves sidebar in auto-hide or scroll-collapsed mode, collapse it back smoothly
-  const handleSidebarMouseLeave = () => {
-    if (isEffectiveCollapsed) {
-      setIsHovered(false);
-    }
-  };
-
-  // Close mobile/popup drawer
-  const handleCloseSidebar = () => {
-    setIsHovered(false);
-    setIsMobileDrawerOpen(false);
-  };
+  }, [placement]);
 
   // Compute File Tree (Roots outside folders & Folders)
   const fileTree = useMemo(() => {
@@ -371,47 +320,101 @@ export default function App() {
         fontFamily: 'var(--font-active)',
       }}
     >
-      {/* Floating Sidebar Toggle Button when in auto-hide mode or scroll-collapsed and not currently hovered */}
-      {isEffectiveCollapsed && !isHovered && (
-        <div 
-          className={`fixed top-3 ${placement === 'right' ? 'right-3' : 'left-3'} z-40`}
-          onMouseEnter={() => setIsHovered(true)}
-        >
+      {/* Mobile Topbar Navigation (< 768px) */}
+      <header 
+        className="md:hidden sticky top-0 z-30 flex items-center justify-between px-4 py-3 border-b backdrop-blur-md"
+        style={{
+          backgroundColor: 'color-mix(in srgb, var(--card-main) 92%, transparent)',
+          borderColor: 'var(--border-main)',
+        }}
+      >
+        <div className="flex items-center gap-2.5 min-w-0">
+          <button
+            type="button"
+            onClick={() => setIsMobileDrawerOpen(true)}
+            className="p-1.5 rounded-lg border hover:opacity-80 transition-opacity cursor-pointer shrink-0"
+            style={{
+              backgroundColor: 'var(--bg-main)',
+              borderColor: 'var(--border-main)',
+              color: 'var(--text-heading)',
+            }}
+            title="Open navigation menu"
+            aria-label="Open navigation menu"
+          >
+            <PanelLeft className="w-4 h-4" />
+          </button>
+          <button
+            type="button"
+            onClick={handleGoHome}
+            className="font-bold text-sm tracking-tight truncate hover:opacity-80 text-left"
+            style={{ color: 'var(--text-heading)' }}
+          >
+            {config.title || config.author}
+          </button>
+        </div>
+
+        <div className="flex items-center gap-1.5 shrink-0">
+          <button
+            type="button"
+            onClick={() => setIsSearchOpen(true)}
+            className="p-1.5 rounded-lg border hover:opacity-80 transition-opacity cursor-pointer"
+            style={{
+              backgroundColor: 'var(--bg-main)',
+              borderColor: 'var(--border-main)',
+              color: 'var(--text-muted)',
+            }}
+            title="Search notes (Cmd+K)"
+            aria-label="Search notes"
+          >
+            <Search className="w-4 h-4" />
+          </button>
+          <button
+            type="button"
+            onClick={handleToggleColorMode}
+            className="p-1.5 rounded-lg border hover:opacity-80 transition-opacity cursor-pointer"
+            style={{
+              backgroundColor: 'var(--bg-main)',
+              borderColor: 'var(--border-main)',
+              color: 'var(--text-heading)',
+            }}
+            title={isDark ? "Switch to light mode" : "Switch to dark mode"}
+            aria-label="Toggle theme"
+          >
+            {isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-indigo-400" />}
+          </button>
+        </div>
+      </header>
+
+      {/* Desktop Floating Expand Button (when desktop sidebar is collapsed or in popup mode) */}
+      {(isSidebarCollapsed || placement === 'popup') && (
+        <div className={`hidden md:block fixed top-3 ${placement === 'right' ? 'right-3' : 'left-3'} z-30`}>
           <button
             type="button"
             onClick={() => {
-              if (isAutoHideMode) {
-                toggleAutoHideMode();
+              if (placement === 'popup') {
+                setIsMobileDrawerOpen((prev) => !prev);
               } else {
-                setIsHovered(true);
+                toggleSidebarCollapse();
               }
             }}
-            className="p-2 rounded-lg border shadow-md backdrop-blur-md transition-all hover:scale-105 active:scale-95 cursor-pointer focus:outline-none flex items-center justify-center"
+            className="p-2 rounded-lg border shadow-xs transition-all hover:scale-105 active:scale-95 cursor-pointer focus:outline-none flex items-center justify-center gap-1.5 font-mono text-xs"
             style={{
               backgroundColor: 'var(--card-main)',
               borderColor: 'var(--border-main)',
-              color: 'var(--accent)',
+              color: 'var(--text-heading)',
             }}
-            title={isAutoHideMode ? "Hover to reveal sidebar / Click to pin open" : "Sidebar collapsed for reading / Hover to reveal"}
-            aria-label="Sidebar collapse mode active"
+            title={placement === 'popup' ? "Open navigation drawer (Cmd+\\)" : "Expand sidebar (Cmd+\\)"}
+            aria-label="Toggle sidebar"
           >
             {placement === 'right' ? <PanelRight className="w-4 h-4" /> : <PanelLeft className="w-4 h-4" />}
+            <span className="hidden lg:inline text-[11px] font-sans">Sidebar</span>
           </button>
         </div>
       )}
 
-      {/* Screen edge hover detector to bring back sidebar when hovered */}
-      {isEffectiveCollapsed && !isHovered && (
-        <div 
-          className={`fixed top-0 bottom-0 ${placement === 'right' ? 'right-0' : 'left-0'} w-5 sm:w-7 z-30 cursor-pointer pointer-events-auto`}
-          onMouseEnter={() => setIsHovered(true)}
-          title="Hover to reveal sidebar"
-        />
-      )}
-
-      {/* Main Layout Area — Edge-to-edge with no outer margin gaps */}
+      {/* Main Layout Area — Normal Flow */}
       <div className={`flex-1 flex w-full ${layoutDirectionClass}`}>
-        {/* Full-Height Sidebar with Author Profile, Search & Theme Controls */}
+        {/* Full-Height Sidebar in Normal Flow */}
         <Sidebar
           config={config}
           tree={fileTree}
@@ -421,32 +424,25 @@ export default function App() {
             setActiveNoteId(id);
             setSelectedFolder(null);
             setSelectedTag(null);
-            if (isEffectiveCollapsed) {
-              setIsHovered(false);
-            }
+            setIsMobileDrawerOpen(false);
           }}
           selectedTag={selectedTag}
           onSelectTag={(tag) => {
             setSelectedTag(tag);
             setSelectedFolder(null);
-            if (isEffectiveCollapsed) {
-              setIsHovered(false);
-            }
+            setIsMobileDrawerOpen(false);
           }}
           selectedFolder={selectedFolder}
           onSelectFolder={(folder) => {
             setSelectedFolder(folder);
             setSelectedTag(null);
-            if (isEffectiveCollapsed) {
-              setIsHovered(false);
-            }
+            setIsMobileDrawerOpen(false);
             window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
-          isAutoHideMode={isAutoHideMode}
-          isCollapsed={isEffectiveCollapsed}
-          onToggleAutoHide={toggleAutoHideMode}
+          isCollapsed={isSidebarCollapsed}
+          onToggleCollapse={toggleSidebarCollapse}
           activeNote={selectedFolder || selectedTag ? null : activeNote}
-          isOpen={isSidebarOpen}
+          isOpen={isMobileDrawerOpen}
           onClose={handleCloseSidebar}
           placement={placement}
           onChangePlacement={handlePlacementChange}
@@ -455,12 +451,10 @@ export default function App() {
           }}
           isDark={isDark}
           onToggleColorMode={handleToggleColorMode}
-          onSidebarClick={() => {}}
-          onMouseLeave={handleSidebarMouseLeave}
         />
 
         {/* Content Container */}
-        <main className={`flex-1 min-w-0 pb-16 transition-all duration-200 ${placement === 'popup' || isEffectiveCollapsed ? 'max-w-4xl mx-auto w-full' : ''}`}>
+        <main className={`flex-1 min-w-0 pb-16 transition-all duration-200 ${placement === 'popup' || isSidebarCollapsed ? 'max-w-4xl mx-auto w-full' : ''}`}>
           {selectedFolder ? (
             /* Automatically generated Folder Subpages Index View */
             <FolderView
