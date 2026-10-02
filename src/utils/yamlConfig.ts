@@ -358,12 +358,14 @@ baseUrl: "https://kyar-kyar.github.io"
 # Aesthetics & Theme Calibration
 theme:
   # Master palette or default dark mode palette:
-  # Available dark presets: nord, tokyo-night, rose-pine, kanagawa, everforest, catppuccin, solarized-dark, gruvbox-dark, monokai-pro, classic-dark
-  palette: "nord"
+  # Available dark presets: classic-dark, everforest, nord, tokyo-night, rose-pine, kanagawa, catppuccin, solarized-dark, gruvbox-dark, monokai-pro
+  palette: "classic-dark"
 
   # Light Mode Color Scheme:
+  # Clean traditional light paper theme
   # Available light presets:
-  #   - "kanagawa-lotus"  : Traditional Japanese unbleached washi paper, sumi ink & lacquer red (Default & Recommended)
+  #   - "classic-light"   : Clean traditional warm minimal stone paper (Default & Recommended)
+  #   - "kanagawa-lotus"  : Traditional Japanese unbleached washi paper, sumi ink & lacquer red
   #   - "rose-pine-dawn"  : Warm soft cream, dusky rose & deep pine indigo
   #   - "gruvbox-light"   : Morhetz warm retro groove parchment & rust
   #   - "catppuccin-latte": Soothing warm pastel latte & sapphire blue
@@ -371,12 +373,12 @@ theme:
   #   - "nord-snow"       : Arctic Ice Studio crystalline snow-white & glacier blue
   #   - "solarized-light" : Ethan Schoonover official Solarized precision palette
   #   - "tokyo-night-day" : Contemporary Shibuya daytime blue & ultramarine
-  #   - "classic-light"   : Warm clean minimal stone paper
-  lightPalette: "kanagawa-lotus"
+  lightPalette: "classic-light"
 
   # Dark Mode Color Scheme:
-  # Calibrated Nord Dark (Arctic Ice Studio polar night palette)
-  darkPalette: "nord"
+  # Clean traditional charcoal stone dark theme
+  # Available dark presets: classic-dark, everforest, nord, tokyo-night, rose-pine, kanagawa, catppuccin, solarized-dark, gruvbox-dark, monokai-pro
+  darkPalette: "classic-dark"
 
   # Default initial color mode on visit: "light", "dark", or "system"
   colorMode: "light"
@@ -389,11 +391,11 @@ theme:
   sidebarPlacement: "left"
 
   # Background Texture Pattern:
-  # Options: "noise", "dots", "grid", "lines", "crosshatch", "blueprint", "none"
-  backgroundPattern: "noise"
+  # Options: "none", "dots", "grid", "lines", "crosshatch", "blueprint", "noise"
+  backgroundPattern: "none"
 
-  # Typography: "mono" (technical), "serif" (literary book), "sans" (modern clean)
-  fontFamily: "mono"
+  # Typography: "sans" (modern clean), "serif" (literary book), "mono" (technical)
+  fontFamily: "sans"
 
   # Accent Highlight Color (Optional hex color, comment out to use palette default accent)
   # accentColor: "#c84053"

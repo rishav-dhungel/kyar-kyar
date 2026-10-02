@@ -24,15 +24,26 @@
 
 /* 
  * UNIFORM TYPOGRAPHY ENFORCEMENT
- * When the user sets fontFamily in YAML (mono, serif, or sans),
- * all UI surfaces (sidebar, article, headings, metadata, cards, modals, tags)
- * become strictly and beautifully uniform in that typeface!
+ * Clean, high-performance font-family inheritance
  */
 html[data-font="mono"],
 html[data-font="mono"] body,
 html[data-font="mono"] #root,
-html[data-font="mono"] * {
-  font-family: var(--font-mono) !important;
+html[data-font="mono"] button,
+html[data-font="mono"] input,
+html[data-font="mono"] select,
+html[data-font="mono"] textarea,
+html[data-font="mono"] kbd,
+html[data-font="mono"] h1,
+html[data-font="mono"] h2,
+html[data-font="mono"] h3,
+html[data-font="mono"] h4,
+html[data-font="mono"] h5,
+html[data-font="mono"] h6,
+html[data-font="mono"] p,
+html[data-font="mono"] span,
+html[data-font="mono"] a {
+  font-family: var(--font-mono);
 }
 
 html[data-font="serif"],
@@ -76,7 +87,7 @@ pre, code, pre *, code *, .code-block, .code-block * {
   font-family: var(--font-mono) !important;
 }
 
-/* Background Patterns & Textures */
+/* Background Patterns & Textures - Clean, 60fps GPU-accelerated */
 .pattern-dots {
   background-image: radial-gradient(var(--pattern-color) 1.25px, transparent 1.25px);
   background-size: 24px 24px;
@@ -107,12 +118,10 @@ pre, code, pre *, code *, .code-block, .code-block * {
   background-size: 100px 100px, 100px 100px, 20px 20px, 20px 20px;
 }
 
+/* Lightweight micro-dot tactile texture without expensive SVG filter turbulence */
 .pattern-noise {
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.045'/%3E%3C/svg%3E");
-}
-
-.dark .pattern-noise {
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.035'/%3E%3C/svg%3E");
+  background-image: radial-gradient(var(--pattern-color) 0.75px, transparent 0.75px);
+  background-size: 6px 6px;
 }
 
 .pattern-none {

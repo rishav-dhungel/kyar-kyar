@@ -240,15 +240,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   let positioningClasses = '';
   if (isPopup) {
-    positioningClasses = `fixed top-0 bottom-0 z-50 w-72 lg:w-80 shadow-2xl transition-transform duration-200 ease-in-out ${
+    positioningClasses = `fixed top-0 bottom-0 z-50 w-72 lg:w-80 shadow-2xl transition-transform duration-200 ease-out will-change-transform ${
       isOpen ? 'left-0 translate-x-0' : 'left-0 -translate-x-full pointer-events-none'
     }`;
   } else if (isRight) {
     positioningClasses = isEffectiveAutoHide
-      ? `fixed top-0 bottom-0 right-0 z-50 h-screen w-72 lg:w-80 border-l shadow-2xl transition-all duration-200 ease-in-out ${
-          isOpen ? 'translate-x-0 opacity-100 pointer-events-auto' : 'translate-x-full opacity-0 pointer-events-none'
+      ? `fixed top-0 bottom-0 right-0 z-50 h-screen w-72 lg:w-80 border-l shadow-2xl transition-transform duration-200 ease-out will-change-transform ${
+          isOpen ? 'translate-x-0 pointer-events-auto' : 'translate-x-full pointer-events-none'
         }`
-      : `fixed md:sticky top-0 bottom-0 z-40 md:z-20 h-screen shrink-0 transition-all duration-200 ease-in-out ${
+      : `fixed md:sticky top-0 bottom-0 z-40 md:z-20 h-screen shrink-0 transition-opacity duration-150 ${
           isOpen 
             ? 'right-0 translate-x-0 w-72 lg:w-80 border-l opacity-100' 
             : 'right-0 translate-x-full md:translate-x-0 w-0 md:w-0 border-transparent opacity-0 pointer-events-none overflow-hidden'
@@ -256,10 +256,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
   } else {
     // Left placement
     positioningClasses = isEffectiveAutoHide
-      ? `fixed top-0 bottom-0 left-0 z-50 h-screen w-72 lg:w-80 border-r shadow-2xl transition-all duration-200 ease-in-out ${
-          isOpen ? 'translate-x-0 opacity-100 pointer-events-auto' : '-translate-x-full opacity-0 pointer-events-none'
+      ? `fixed top-0 bottom-0 left-0 z-50 h-screen w-72 lg:w-80 border-r shadow-2xl transition-transform duration-200 ease-out will-change-transform ${
+          isOpen ? 'translate-x-0 pointer-events-auto' : '-translate-x-full pointer-events-none'
         }`
-      : `fixed md:sticky top-0 bottom-0 z-40 md:z-20 h-screen shrink-0 transition-all duration-200 ease-in-out ${
+      : `fixed md:sticky top-0 bottom-0 z-40 md:z-20 h-screen shrink-0 transition-opacity duration-150 ${
           isOpen 
             ? 'left-0 translate-x-0 w-72 lg:w-80 border-r opacity-100' 
             : 'left-0 -translate-x-full md:translate-x-0 w-0 md:w-0 border-transparent opacity-0 pointer-events-none overflow-hidden'

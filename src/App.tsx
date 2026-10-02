@@ -34,14 +34,15 @@ export default function App() {
       const lightKey = config.theme.lightPalette || 'classic-light';
       return CALIBRATED_PALETTES[lightKey] || CALIBRATED_PALETTES['classic-light'];
     }
-    const darkKey = config.theme.darkPalette || config.theme.palette || 'everforest';
-    return CALIBRATED_PALETTES[darkKey] || CALIBRATED_PALETTES['everforest'];
+    const darkKey = config.theme.darkPalette || config.theme.palette || 'classic-dark';
+    return CALIBRATED_PALETTES[darkKey] || CALIBRATED_PALETTES['classic-dark'];
   }, [config.theme.lightPalette, config.theme.darkPalette, config.theme.palette, isDark]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('kyar_kyar_light_palette');
       localStorage.removeItem('kyar_kyar_dark_palette');
+      localStorage.removeItem('kyar_kyar_autohide_sidebar');
     }
   }, []);
 
@@ -107,7 +108,7 @@ export default function App() {
     root.style.setProperty('--pattern-color', activePalette.patternColor);
 
     // Apply global uniform font family matching YAML config
-    const fontChoice = config.theme.fontFamily || 'serif';
+    const fontChoice = config.theme.fontFamily || 'sans';
     root.setAttribute('data-font', fontChoice);
     const activeFont = 
       fontChoice === 'mono' 
@@ -196,52 +197,78 @@ export default function App() {
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, [notes]);
 
-  // Modals / Drawers State
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
-  // Hover & Auto-hide mode state:
-  const [isAutoHideMode, setIsAutoHideMode] = useState<boolean>(() => {
+  // User-facing interactive placement state (defaults to YAML, toggleable via frontend buttons at bottom of sidebar)
+  const [placement, setPlacement] = useState<SidebarPlacement>(() => {
     if (typeof window !== 'undefined') {
-      return localStorage.getItem('kyar_kyar_autohide_sidebar') === 'true';
+      const saved = localStorage.getItem('kyar_kyar_sidebar_placement') as SidebarPlacement;
+      if (saved && ['left', 'right', 'popup'].includes(saved)) {
+        return saved;
+      }
     }
-    return false;
+    return config.theme.sidebarPlacement || 'left';
   });
 
+  const handlePlacementChange = (newPlacement: SidebarPlacement) => {
+    setPlacement(newPlacement);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('kyar_kyar_sidebar_placement', newPlacement);
+    }
+  };
+
+  // Modals / Drawers State
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  // Hover & Auto-hide mode state (defaults to false so sidebar loads open and visible!)
+  const [isAutoHideMode, setIsAutoHideMode] = useState<boolean>(false);
   const [isHovered, setIsHovered] = useState(false);
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
 
-  // Track scroll depth to auto-collapse sidebar when scrolling down past 20%
-  // "pin or unpinned the side bar should collapse when the user is scrolling down like after 20% scrolling."
+  // Track scroll depth to auto-collapse sidebar when scrolling down past 25% on long content
   const [isScrolledPast20, setIsScrolledPast20] = useState(false);
 
   useEffect(() => {
+    let rafId: number | null = null;
     const handleScroll = () => {
-      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-      const currentScrollY = window.scrollY || document.documentElement.scrollTop;
-      const pct = docHeight > 0 
-        ? Math.min(100, Math.max(0, Math.round((currentScrollY / docHeight) * 100))) 
-        : 0;
+      if (rafId !== null) return;
+      rafId = requestAnimationFrame(() => {
+        rafId = null;
+        const currentScrollY = window.scrollY || document.documentElement.scrollTop;
+        const docHeight = document.documentElement.scrollHeight - window.innerHeight;
 
-      // Collapse after 20% scrolling down; restore when scrolling back up near top (< 15%)
-      setIsScrolledPast20((prev) => {
-        if (pct >= 20) return true;
-        if (pct < 15) return false;
-        return prev;
+        // Keep sidebar open near top of page (first 250px)
+        if (currentScrollY < 250) {
+          setIsScrolledPast20(false);
+          return;
+        }
+
+        const pct = docHeight > 0 
+          ? Math.min(100, Math.max(0, Math.round((currentScrollY / docHeight) * 100))) 
+          : 0;
+
+        // Collapse after 25% scrolling down AND more than 250px down
+        if (pct >= 25) {
+          setIsScrolledPast20(true);
+        } else if (pct < 15) {
+          setIsScrolledPast20(false);
+        }
       });
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll();
-    return () => window.removeEventListener('scroll', handleScroll);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      if (rafId !== null) cancelAnimationFrame(rafId);
+    };
   }, []);
 
-  // Whether the sidebar is in collapsed state (either user explicitly unpinned it, or scrolled past 20%)
+  // Whether the sidebar is in collapsed state (either user explicitly unpinned it, or scrolled past 25%)
   const isEffectiveCollapsed = isAutoHideMode || isScrolledPast20;
 
   // When in collapsed state: sidebar expands only when hovered.
-  // Otherwise: sidebar remains docked open (unless popup mode).
+  // When in popup mode: opens via isMobileDrawerOpen.
+  // Otherwise: sidebar remains docked open and visible on load!
   const isSidebarOpen = isEffectiveCollapsed 
     ? isHovered 
-    : (config.theme.sidebarPlacement === 'popup' ? isMobileDrawerOpen : true);
+    : (placement === 'popup' ? isMobileDrawerOpen : true);
 
   const toggleAutoHideMode = () => {
     setIsAutoHideMode((prev) => {
@@ -323,25 +350,7 @@ export default function App() {
     );
   }, [notes, selectedTag]);
 
-  // User-facing interactive placement state (defaults to YAML, toggleable via frontend buttons at bottom of sidebar)
-  const [placement, setPlacement] = useState<SidebarPlacement>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('kyar_kyar_sidebar_placement') as SidebarPlacement;
-      if (saved && ['left', 'right', 'popup'].includes(saved)) {
-        return saved;
-      }
-    }
-    return config.theme.sidebarPlacement || 'left';
-  });
-
-  const handlePlacementChange = (newPlacement: SidebarPlacement) => {
-    setPlacement(newPlacement);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('kyar_kyar_sidebar_placement', newPlacement);
-    }
-  };
-
-  const patternClass = `pattern-${config.theme.backgroundPattern || 'dots'}`;
+  const patternClass = `pattern-${config.theme.backgroundPattern || 'none'}`;
 
   // Determine container flex direction based on placement
   let layoutDirectionClass = '';
