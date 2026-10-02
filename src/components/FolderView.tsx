@@ -246,7 +246,8 @@ export const FolderView: React.FC<FolderViewProps> = ({
                 <div
                   key={sub}
                   onClick={() => onSelectFolder?.(sub)}
-                  className="flex items-center justify-between p-3 rounded-lg border cursor-pointer hover:opacity-85 transition-all"
+                  title={`Folder: ${sub}`}
+                  className="group relative flex items-center justify-between p-3 rounded-lg border cursor-pointer hover:opacity-85 transition-all"
                   style={{
                     backgroundColor: 'var(--card-main)',
                     borderColor: 'var(--border-main)',
@@ -254,13 +255,34 @@ export const FolderView: React.FC<FolderViewProps> = ({
                 >
                   <div className="flex items-center gap-2 min-w-0">
                     <Folder className="w-4 h-4 shrink-0" style={{ color: 'var(--accent)' }} />
-                    <span className="text-xs font-mono font-medium truncate" style={{ color: 'var(--text-heading)' }}>
+                    <span 
+                      title={subName}
+                      className="text-xs font-mono font-medium truncate" 
+                      style={{ color: 'var(--text-heading)' }}
+                    >
                       {subName}/
                     </span>
                   </div>
                   <span className="text-[11px] font-mono shrink-0" style={{ color: 'var(--text-muted)' }}>
                     {count} {count === 1 ? 'page' : 'pages'}
                   </span>
+
+                  {/* Hover tooltip showing full folder path */}
+                  <div 
+                    role="tooltip"
+                    className="absolute left-3 bottom-full mb-1 hidden group-hover:flex items-center z-30 pointer-events-none transition-all duration-150"
+                  >
+                    <div 
+                      className="px-2 py-0.5 text-xs font-mono rounded-md shadow-lg border backdrop-blur-md whitespace-nowrap"
+                      style={{
+                        backgroundColor: 'var(--card-main)',
+                        borderColor: 'var(--border-main)',
+                        color: 'var(--text-heading)',
+                      }}
+                    >
+                      /{sub}
+                    </div>
+                  </div>
                 </div>
               );
             })}
@@ -305,14 +327,15 @@ export const FolderView: React.FC<FolderViewProps> = ({
               <article
                 key={note.id}
                 onClick={() => onSelectNote(note.id)}
-                className="group p-4 rounded-lg border cursor-pointer transition-all hover:scale-[1.005] hover:shadow-xs active:scale-[0.998]"
+                title={note.title}
+                className="group relative p-4 rounded-lg border cursor-pointer transition-all hover:scale-[1.005] hover:shadow-xs active:scale-[0.998]"
                 style={{
                   backgroundColor: 'var(--card-main)',
                   borderColor: 'var(--border-main)',
                 }}
               >
                 <div className="flex items-start justify-between gap-3 mb-1.5">
-                  <div className="flex items-center gap-2 min-w-0">
+                  <div className="relative group/topic flex items-center gap-2 min-w-0 flex-1">
                     {note.pinned ? (
                       <span title="Pinned note">
                         <Pin className="w-3.5 h-3.5 text-amber-500 shrink-0 rotate-45" />
@@ -321,11 +344,29 @@ export const FolderView: React.FC<FolderViewProps> = ({
                       <FileText className="w-3.5 h-3.5 shrink-0 opacity-60" style={{ color: 'var(--accent)' }} />
                     )}
                     <h3 
-                      className={`text-sm sm:text-base font-semibold truncate group-hover:underline ${fontClass}`}
+                      title={note.title}
+                      className={`text-sm sm:text-base font-semibold truncate group-hover/topic:underline ${fontClass}`}
                       style={{ color: 'var(--text-heading)' }}
                     >
                       {note.title}
                     </h3>
+
+                    {/* Floating Full Title Badge on Hover */}
+                    <div 
+                      role="tooltip"
+                      className="absolute left-6 bottom-full mb-1 hidden group-hover:flex items-center z-30 pointer-events-none transition-all duration-150 animate-fadeIn"
+                    >
+                      <div 
+                        className="px-2.5 py-1 text-xs font-medium rounded-md shadow-xl border backdrop-blur-md max-w-sm sm:max-w-md md:max-w-lg break-words"
+                        style={{
+                          backgroundColor: 'var(--card-main)',
+                          borderColor: 'var(--border-main)',
+                          color: 'var(--text-heading)',
+                        }}
+                      >
+                        {note.title}
+                      </div>
+                    </div>
                   </div>
 
                   <ArrowRight 

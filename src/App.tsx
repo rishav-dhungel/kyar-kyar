@@ -34,9 +34,16 @@ export default function App() {
       const lightKey = config.theme.lightPalette || 'classic-light';
       return CALIBRATED_PALETTES[lightKey] || CALIBRATED_PALETTES['classic-light'];
     }
-    const darkKey = config.theme.darkPalette || config.theme.palette || 'nord';
-    return CALIBRATED_PALETTES[darkKey] || CALIBRATED_PALETTES['nord'];
+    const darkKey = config.theme.darkPalette || config.theme.palette || 'everforest';
+    return CALIBRATED_PALETTES[darkKey] || CALIBRATED_PALETTES['everforest'];
   }, [config.theme.lightPalette, config.theme.darkPalette, config.theme.palette, isDark]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('kyar_kyar_light_palette');
+      localStorage.removeItem('kyar_kyar_dark_palette');
+    }
+  }, []);
 
   const handleToggleColorMode = () => {
     setIsDark((prev) => !prev);
@@ -511,21 +518,42 @@ export default function App() {
                       setSelectedTag(null);
                       setSelectedFolder(null);
                     }}
-                    className="p-4 rounded-lg border cursor-pointer transition-all hover:opacity-90"
+                    title={note.title}
+                    className="group relative p-4 rounded-lg border cursor-pointer transition-all hover:opacity-90"
                     style={{
                       backgroundColor: 'var(--card-main)',
                       borderColor: 'var(--border-main)',
                     }}
                   >
                     <div className="flex items-center justify-between gap-2 mb-1">
-                      <h3 
-                        className="font-semibold text-sm truncate"
-                        style={{ color: 'var(--text-heading)' }}
-                      >
-                        {note.title}
-                      </h3>
+                      <div className="relative group/topic flex-1 min-w-0">
+                        <h3 
+                          title={note.title}
+                          className="font-semibold text-sm truncate group-hover/topic:underline"
+                          style={{ color: 'var(--text-heading)' }}
+                        >
+                          {note.title}
+                        </h3>
+
+                        {/* Floating Full Title Badge on Hover */}
+                        <div 
+                          role="tooltip"
+                          className="absolute left-0 bottom-full mb-1 hidden group-hover:flex items-center z-30 pointer-events-none transition-all duration-150 animate-fadeIn"
+                        >
+                          <div 
+                            className="px-2.5 py-1 text-xs font-medium rounded-md shadow-xl border backdrop-blur-md max-w-sm sm:max-w-md break-words"
+                            style={{
+                              backgroundColor: 'var(--card-main)',
+                              borderColor: 'var(--border-main)',
+                              color: 'var(--text-heading)',
+                            }}
+                          >
+                            {note.title}
+                          </div>
+                        </div>
+                      </div>
                       {note.date && (
-                        <span className="text-[11px] font-mono shrink-0" style={{ color: 'var(--text-muted)' }}>
+                        <span className="text-[11px] font-mono shrink-0 ml-2" style={{ color: 'var(--text-muted)' }}>
                           {note.date}
                         </span>
                       )}

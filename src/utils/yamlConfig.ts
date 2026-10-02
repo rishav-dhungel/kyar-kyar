@@ -228,12 +228,119 @@ export const CALIBRATED_PALETTES: Record<string, CalibratedPalette> = {
     codeBg: '#232a2e',
     patternColor: 'rgba(167, 192, 128, 0.08)',
   },
+
+  // Kanagawa Lotus Light (Inspired by unbleached washi paper & traditional Japanese sumi ink)
+  'kanagawa-lotus': {
+    name: 'Kanagawa Lotus',
+    description: 'Katsushika Hokusai inspired unbleached washi paper, deep sumi ink & lacquer red',
+    isDark: false,
+    bgMain: '#f2ecde',
+    sidebarBg: '#eae3d2',
+    cardMain: '#faf6ee',
+    borderMain: '#dcd4be',
+    textMain: '#545464',
+    textHeading: '#43436c',
+    textMuted: '#8a8980',
+    accent: '#c84053',
+    codeBg: '#eae3d2',
+    patternColor: 'rgba(84, 84, 100, 0.08)',
+  },
+
+  // Rosé Pine Dawn (Soho aesthetic with warm soft cream, dusky rose & deep pine indigo)
+  'rose-pine-dawn': {
+    name: 'Rosé Pine Dawn',
+    description: 'Soho aesthetic with warm soft cream, dusky rose & deep pine indigo',
+    isDark: false,
+    bgMain: '#faf4ed',
+    sidebarBg: '#f2e9de',
+    cardMain: '#fffaf3',
+    borderMain: '#e4dad1',
+    textMain: '#575279',
+    textHeading: '#286983',
+    textMuted: '#9893a5',
+    accent: '#b4637a',
+    codeBg: '#f2e9de',
+    patternColor: 'rgba(180, 99, 122, 0.07)',
+  },
+
+  // Catppuccin Latte (Soothing warm pastel latte with crisp sapphire & lavender highlights)
+  'catppuccin-latte': {
+    name: 'Catppuccin Latte',
+    description: 'Soothing warm pastel latte with crisp sapphire & lavender highlights',
+    isDark: false,
+    bgMain: '#eff1f5',
+    sidebarBg: '#e6e9ef',
+    cardMain: '#ffffff',
+    borderMain: '#ccd0da',
+    textMain: '#4c4f69',
+    textHeading: '#1e1e2e',
+    textMuted: '#6c6f85',
+    accent: '#1e66f5',
+    codeBg: '#e6e9ef',
+    patternColor: 'rgba(30, 102, 245, 0.06)',
+  },
+
+  // Everforest Light (Sainnhe calming forest botanical greens on warm tea-tinted parchment)
+  'everforest-light': {
+    name: 'Everforest Light',
+    description: 'Sainnhe calming forest botanical greens on warm tea-tinted parchment',
+    isDark: false,
+    bgMain: '#f8f5e4',
+    sidebarBg: '#efeac9',
+    cardMain: '#ffffff',
+    borderMain: '#ded7af',
+    textMain: '#5c6a72',
+    textHeading: '#2d353b',
+    textMuted: '#829181',
+    accent: '#8da101',
+    codeBg: '#efeac9',
+    patternColor: 'rgba(141, 161, 1, 0.07)',
+  },
+
+  // Nord Snow Storm (Arctic Ice Studio crystalline snow-white & glacier frost blue)
+  'nord-snow': {
+    name: 'Nord Snow Storm',
+    description: 'Arctic Ice Studio crystalline snow-white & glacier frost blue palette',
+    isDark: false,
+    bgMain: '#eceff4',
+    sidebarBg: '#e5e9f0',
+    cardMain: '#ffffff',
+    borderMain: '#d8dee9',
+    textMain: '#2e3440',
+    textHeading: '#1c212a',
+    textMuted: '#4c566a',
+    accent: '#5e81ac',
+    codeBg: '#e5e9f0',
+    patternColor: 'rgba(94, 129, 172, 0.07)',
+  },
+
+  // Tokyo Night Day (Contemporary Shibuya daytime sky blue with vibrant ultramarine)
+  'tokyo-night-day': {
+    name: 'Tokyo Night Day',
+    description: 'Contemporary Shibuya daytime sky blue with vibrant ultramarine',
+    isDark: false,
+    bgMain: '#e1e2e7',
+    sidebarBg: '#d5d6db',
+    cardMain: '#ffffff',
+    borderMain: '#c4c8d4',
+    textMain: '#343b58',
+    textHeading: '#1d202f',
+    textMuted: '#6172b0',
+    accent: '#2e7de9',
+    codeBg: '#d5d6db',
+    patternColor: 'rgba(46, 125, 233, 0.07)',
+  },
 };
 
 // Aliases for user convenience in YAML
 CALIBRATED_PALETTES['classic'] = CALIBRATED_PALETTES['classic-light'];
 CALIBRATED_PALETTES['solarized'] = CALIBRATED_PALETTES['solarized-dark'];
 CALIBRATED_PALETTES['rosepine'] = CALIBRATED_PALETTES['rose-pine'];
+CALIBRATED_PALETTES['lotus'] = CALIBRATED_PALETTES['kanagawa-lotus'];
+CALIBRATED_PALETTES['dawn'] = CALIBRATED_PALETTES['rose-pine-dawn'];
+CALIBRATED_PALETTES['latte'] = CALIBRATED_PALETTES['catppuccin-latte'];
+CALIBRATED_PALETTES['nord-light'] = CALIBRATED_PALETTES['nord-snow'];
+CALIBRATED_PALETTES['snow'] = CALIBRATED_PALETTES['nord-snow'];
 
 export const DEFAULT_CONFIG_YAML = `# ==============================================================================
 # kyar-kyar — Personal Blog & Digital Garden Configuration
@@ -255,16 +362,24 @@ theme:
   palette: "nord"
 
   # Light Mode Color Scheme:
-  # Uses the clean warm stone paper color scheme ("classic-light")
-  # Available light presets: classic-light, solarized-light, gruvbox-light
-  lightPalette: "classic-light"
+  # Available light presets:
+  #   - "kanagawa-lotus"  : Traditional Japanese unbleached washi paper, sumi ink & lacquer red (Default & Recommended)
+  #   - "rose-pine-dawn"  : Warm soft cream, dusky rose & deep pine indigo
+  #   - "gruvbox-light"   : Morhetz warm retro groove parchment & rust
+  #   - "catppuccin-latte": Soothing warm pastel latte & sapphire blue
+  #   - "everforest-light": Calming forest botanical greens & tea parchment
+  #   - "nord-snow"       : Arctic Ice Studio crystalline snow-white & glacier blue
+  #   - "solarized-light" : Ethan Schoonover official Solarized precision palette
+  #   - "tokyo-night-day" : Contemporary Shibuya daytime blue & ultramarine
+  #   - "classic-light"   : Warm clean minimal stone paper
+  lightPalette: "kanagawa-lotus"
 
   # Dark Mode Color Scheme:
   # Calibrated Nord Dark (Arctic Ice Studio polar night palette)
   darkPalette: "nord"
 
-  # Default initial color mode on visit: "dark", "light", or "system"
-  colorMode: "dark"
+  # Default initial color mode on visit: "light", "dark", or "system"
+  colorMode: "light"
 
   # Sidebar Placement:
   # Options:
@@ -274,14 +389,14 @@ theme:
   sidebarPlacement: "left"
 
   # Background Texture Pattern:
-  # Options: "dots", "grid", "lines", "crosshatch", "blueprint", "noise", "none"
-  backgroundPattern: "dots"
+  # Options: "noise", "dots", "grid", "lines", "crosshatch", "blueprint", "none"
+  backgroundPattern: "noise"
 
-  # Typography: "serif" (literary book), "sans" (modern clean), "mono" (technical)
-  fontFamily: "serif"
+  # Typography: "mono" (technical), "serif" (literary book), "sans" (modern clean)
+  fontFamily: "mono"
 
-  # Accent Highlight Color (Optional hex color, e.g. #64b5f6 for calibrated Frost blue)
-  accentColor: "#64b5f6"
+  # Accent Highlight Color (Optional hex color, comment out to use palette default accent)
+  # accentColor: "#c84053"
 
   # Granular Hex Overrides (Optional — override any individual color directly in YAML):
   # customColors:

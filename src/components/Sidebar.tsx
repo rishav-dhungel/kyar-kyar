@@ -150,7 +150,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <span style={{ color: 'var(--accent)' }}>
                 {isExpanded ? <FolderOpen className="w-3.5 h-3.5" /> : <Folder className="w-3.5 h-3.5" />}
               </span>
-              <span className="truncate font-mono tracking-tight">{folder.name}</span>
+              <span className="truncate font-mono tracking-tight" title={folder.name}>{folder.name}</span>
             </div>
 
             {config.navigation.showFolderCounts && (
@@ -186,7 +186,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
             onClose();
           }
         }}
-        className={`group flex items-center justify-between py-1.5 px-2 rounded-md text-xs cursor-pointer transition-colors ${
+        title={fileNode.note.title}
+        className={`group relative flex items-center justify-between py-1.5 px-2 rounded-md text-xs cursor-pointer transition-colors ${
           isActive ? 'font-medium shadow-xs' : 'hover:opacity-85'
         }`}
         style={{ 
@@ -196,7 +197,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           borderLeft: isActive ? '2px solid var(--accent)' : '2px solid transparent',
         }}
       >
-        <div className="flex items-center gap-1.5 min-w-0">
+        <div className="flex items-center gap-1.5 min-w-0 flex-1">
           {fileNode.note.pinned ? (
             <Pin className="w-3 h-3 text-amber-500 shrink-0 rotate-45" />
           ) : (
@@ -205,14 +206,31 @@ export const Sidebar: React.FC<SidebarProps> = ({
               style={{ color: isActive ? 'var(--accent)' : 'var(--text-muted)' }} 
             />
           )}
-          <span className="truncate">{fileNode.note.title}</span>
+          <span className="truncate flex-1" title={fileNode.note.title}>{fileNode.note.title}</span>
         </div>
 
         {fileNode.note.date && (
-          <span className="text-[10px] font-mono hidden group-hover:inline shrink-0" style={{ color: 'var(--text-muted)' }}>
+          <span className="text-[10px] font-mono hidden group-hover:inline shrink-0 ml-1" style={{ color: 'var(--text-muted)' }}>
             {fileNode.note.date.slice(5)}
           </span>
         )}
+
+        {/* Hover Tooltip displaying full title of topic */}
+        <div 
+          role="tooltip"
+          className={`absolute ${isRight ? 'right-full mr-2' : 'left-full ml-2'} top-1/2 -translate-y-1/2 hidden group-hover:flex items-center z-50 pointer-events-none transition-all duration-150 animate-fadeIn`}
+        >
+          <div 
+            className="px-2.5 py-1 text-xs rounded-md shadow-xl border whitespace-normal max-w-xs break-words font-medium backdrop-blur-md"
+            style={{
+              backgroundColor: 'var(--card-main)',
+              borderColor: 'var(--border-main)',
+              color: 'var(--text-heading)',
+            }}
+          >
+            {fileNode.note.title}
+          </div>
+        </div>
       </div>
     );
   };

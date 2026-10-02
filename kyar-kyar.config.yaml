@@ -14,20 +14,19 @@ baseUrl: "https://kyar-kyar.github.io"
 # Aesthetics & Theme Calibration
 theme:
   # Master palette or default dark mode palette
-  palette: "nord"
+  palette: "everforest"
 
   # Light Mode Color Scheme:
-  # Uses the previous clean warm stone paper color scheme ("classic-light")
-  # Options: "classic-light", "solarized-light", "gruvbox-light"
+  # Options: "classic-light", "kanagawa-lotus", "rose-pine-dawn", "gruvbox-light", "catppuccin-latte", "everforest-light", "nord-snow", "solarized-light", "tokyo-night-day"
   lightPalette: "classic-light"
 
   # Dark Mode Color Scheme:
-  # Calibrated Nord Dark (Arctic Ice Studio polar night palette)
-  # Options: "nord", "tokyo-night", "rose-pine", "kanagawa", "everforest", "catppuccin", "solarized-dark", "gruvbox-dark", "monokai-pro", "classic-dark"
-  darkPalette: "nord"
+  # Calibrated Everforest Dark (Omakub warm natural forest green)
+  # Options: "everforest", "nord", "tokyo-night", "rose-pine", "kanagawa", "catppuccin", "solarized-dark", "gruvbox-dark", "monokai-pro", "classic-dark"
+  darkPalette: "everforest"
 
   # Default initial color mode on visit: "dark", "light", or "system"
-  colorMode: "dark"
+  colorMode: "light"
 
   # Sidebar Placement:
   # Options:
@@ -38,13 +37,13 @@ theme:
 
   # Background Texture Pattern:
   # Options: "dots", "grid", "lines", "crosshatch", "blueprint", "noise", "none"
-  backgroundPattern: "dots"
+  backgroundPattern: "noise"
 
   # Typography: "serif" (literary book), "sans" (modern clean), "mono" (technical)
   fontFamily: "mono"
 
-  # Accent Highlight Color (Optional hex color, e.g. #64b5f6 for calibrated Frost blue)
-  accentColor: "#64b5f6"
+  # Accent Highlight Color (Optional hex color, comment out to use palette accent)
+  # accentColor: "#af3a03"
 
   # Granular Hex Overrides (Optional — you can override any specific color directly in YAML):
   # customColors:
