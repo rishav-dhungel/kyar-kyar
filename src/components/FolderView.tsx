@@ -338,7 +338,7 @@ export const FolderView: React.FC<FolderViewProps> = ({
                   <div className="relative group/topic flex items-center gap-2 min-w-0 flex-1">
                     {note.pinned ? (
                       <span title="Pinned note">
-                        <Pin className="w-3.5 h-3.5 text-amber-500 shrink-0 rotate-45" />
+                        <Pin className="w-3.5 h-3.5 shrink-0 rotate-45" style={{ color: 'var(--text-muted)' }} />
                       </span>
                     ) : (
                       <FileText className="w-3.5 h-3.5 shrink-0 opacity-60" style={{ color: 'var(--accent)' }} />

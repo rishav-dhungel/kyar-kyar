@@ -196,6 +196,7 @@ pre, code, pre *, code *, .code-block, .code-block * {
   margin-top: 1.75rem;
   margin-bottom: 0.65rem;
   line-height: 1.35;
+  scroll-margin-top: 5rem;
 }
 
 .markdown-body h1 {

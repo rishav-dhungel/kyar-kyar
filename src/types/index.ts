@@ -24,6 +24,9 @@ export interface NoteItem {
   headings: NoteHeading[];
   forwardLinks: string[]; // slugs or titles linked in this note [[target]]
   backlinks: string[]; // note IDs linking to this note
+  isNotebook?: boolean; // True if automatically converted from .ipynb or .ipyb
+  notebookLanguage?: string; // e.g. "python", "julia", "r"
+  notebookKernel?: string; // e.g. "Python 3"
 }
 
 export interface FolderNode {

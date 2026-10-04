@@ -6,8 +6,6 @@ tags: [guides, local-development, testing, quickstart, nodejs]
 description: Step-by-step guide to installing dependencies, running the local dev server, testing wikilinks and tags, and previewing production builds locally.
 ---
 
-# Running and Testing kyar-kyar Locally
-
 This guide walks you through setting up, developing, testing, and verifying your **kyar-kyar** digital garden on your local computer.
 
 ---

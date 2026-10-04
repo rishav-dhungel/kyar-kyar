@@ -6,8 +6,6 @@ tags: [guides, documentation, index, overview]
 description: Technical guides and documentation for kyar-kyar.
 ---
 
-# Guides & Documentation
-
 Welcome to the **kyar-kyar** guides repository. This site contains documentation and operational guides for setting up, configuring, writing in, and deploying the kyar-kyar digital garden and static documentation engine.
 
 ---

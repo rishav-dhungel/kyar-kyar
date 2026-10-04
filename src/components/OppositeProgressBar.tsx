@@ -15,6 +15,7 @@ export const OppositeProgressBar: React.FC<OppositeProgressBarProps> = ({
   const [progress, setProgress] = useState(0);
   const [activeSlug, setActiveSlug] = useState<string>('');
   const [hoveredSlug, setHoveredSlug] = useState<string | null>(null);
+  const [isApproaching, setIsApproaching] = useState<boolean>(false);
 
   // Determine which side of the screen to dock on (opposite of sidebar)
   // If sidebar is on the left -> progress bar is on the right
@@ -25,9 +26,11 @@ export const OppositeProgressBar: React.FC<OppositeProgressBarProps> = ({
   // Build section items including top Overview/Title if headings exist
   const sections = React.useMemo(() => {
     if (!headings || headings.length === 0) return [];
+    const normalizedTitle = title.trim().toLowerCase();
+    const cleanHeadings = headings.filter((h) => h.text.trim().toLowerCase() !== normalizedTitle);
     return [
       { slug: 'article-top', text: title, level: 1 },
-      ...headings.map((h) => ({ slug: h.slug, text: h.text, level: h.level })),
+      ...cleanHeadings.map((h) => ({ slug: h.slug, text: h.text, level: h.level })),
     ];
   }, [headings, title]);
 
@@ -92,15 +95,20 @@ export const OppositeProgressBar: React.FC<OppositeProgressBarProps> = ({
 
   return (
     <aside
-      aria-label="Reading progress"
+      aria-label="Reading progress tracker"
+      onMouseEnter={() => setIsApproaching(true)}
+      onMouseLeave={() => {
+        setIsApproaching(false);
+        setHoveredSlug(null);
+      }}
       className={`fixed ${isDockedLeft ? 'left-3 sm:left-5 lg:left-8' : 'right-3 sm:right-5 lg:right-8'} top-1/2 -translate-y-1/2 z-30 select-none pointer-events-auto hidden md:flex flex-col ${
         isDockedLeft ? 'items-start' : 'items-end'
-      } gap-3`}
+      } gap-2.5 py-3 px-1.5`}
     >
       {/* Percentage in faint font-mono text */}
       <div 
         className="font-mono text-[10px] tracking-wider transition-opacity duration-200"
-        style={{ color: 'var(--text-muted)', opacity: 0.5 }}
+        style={{ color: 'var(--text-muted)', opacity: isApproaching ? 0.8 : 0.4 }}
         title={`Reading progress: ${progress}%`}
       >
         {progress}%
@@ -108,13 +116,18 @@ export const OppositeProgressBar: React.FC<OppositeProgressBarProps> = ({
 
       {/* Vertical Track / Section Line Stack */}
       <div 
-        className={`flex flex-col ${isDockedLeft ? 'items-start' : 'items-end'} gap-2 relative py-1`}
+        className={`flex flex-col ${isDockedLeft ? 'items-start' : 'items-end'} gap-1.5 relative py-1`}
       >
         {sections.length > 0 ? (
           sections.map((section, idx) => {
             const isActive = section.slug === activeSlug || (activeIndex === -1 && idx === 0);
             const isPassed = activeIndex !== -1 && idx < activeIndex;
             const isHovered = hoveredSlug === section.slug;
+
+            // Only show title when user approaches / hovers:
+            // 1. If a specific line is hovered, show its title.
+            // 2. Or if approaching the tracker area and this is the active section, show it.
+            const showTitle = isHovered || (isApproaching && isActive && !hoveredSlug);
 
             return (
               <div
@@ -127,47 +140,34 @@ export const OppositeProgressBar: React.FC<OppositeProgressBarProps> = ({
                 }`}
                 title={section.text}
               >
-                {/* The Section Line Indicator:
-                    - Active section: longer accent line
-                    - Inactive sections (before/after): simple minimal line */}
+                {/* The Section Line Indicator: Always visible with line and color */}
                 <div
-                  className="rounded-full transition-all duration-300 ease-out shrink-0"
+                  className="rounded-full transition-all duration-200 ease-out shrink-0"
                   style={{
-                    height: '2px',
-                    width: isActive ? '20px' : isHovered ? '14px' : '9px',
-                    backgroundColor: isActive 
+                    height: isActive || isHovered ? '2.5px' : '2px',
+                    width: isHovered ? '22px' : isActive ? '18px' : '9px',
+                    backgroundColor: isActive || isHovered
                       ? 'var(--accent)' 
                       : isPassed 
                       ? 'var(--accent)' 
                       : 'var(--border-main)',
-                    opacity: isActive ? 1 : isPassed ? 0.5 : 0.3,
+                    opacity: isActive || isHovered ? 1 : isPassed ? 0.55 : 0.35,
                   }}
                 />
 
-                {/* Text:
-                    - ONLY show current topic in faint color
-                    - Before and after sections: NO text (only lines)!
-                    - (When hovered on before/after, subtle peek label) */}
-                {isActive ? (
+                {/* Title: ONLY shown when user approaches or hovers */}
+                {showTitle && (
                   <span
-                    className="text-[11px] font-mono tracking-tight max-w-[130px] lg:max-w-[170px] truncate transition-opacity duration-300"
+                    className="text-[11px] font-mono tracking-tight max-w-[130px] lg:max-w-[180px] truncate px-2 py-0.5 rounded border shadow-xs backdrop-blur-md transition-all duration-150 animate-fadeIn pointer-events-none"
                     style={{
-                      color: 'var(--text-muted)',
-                      opacity: 0.7,
+                      backgroundColor: 'color-mix(in srgb, var(--card-main) 94%, transparent)',
+                      borderColor: 'var(--border-main)',
+                      color: isActive || isHovered ? 'var(--text-heading)' : 'var(--text-muted)',
                     }}
                   >
                     {section.text}
                   </span>
-                ) : isHovered ? (
-                  <span
-                    className="text-[10px] font-mono tracking-tight max-w-[120px] truncate opacity-50 transition-opacity duration-150 animate-fadeIn"
-                    style={{
-                      color: 'var(--text-muted)',
-                    }}
-                  >
-                    {section.text}
-                  </span>
-                ) : null}
+                )}
               </div>
             );
           })

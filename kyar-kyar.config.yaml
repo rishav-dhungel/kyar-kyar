@@ -1,9 +1,4 @@
-# ==============================================================================
-# kyar-kyar — Personal Blog & Digital Garden Configuration
-# Fully vibe coded website generator configured entirely via this YAML file
-# ==============================================================================
-
-# Personal Identity & Branding (Your Name, Face Photo & Tagline)
+# Personal Identity & Branding
 author: "Kyar-Kyar"
 tagline: "Software Engineer, Writer & Thinker"
 bio: "Technical documentation, operational guides, and architecture for kyar-kyar."
@@ -11,42 +6,29 @@ avatarUrl: ""
 title: "Kyar-Kyar's Notes"
 baseUrl: "https://kyar-kyar.github.io"
 
-# Aesthetics & Theme Calibration
 theme:
-  # Master palette or default dark mode palette
-  palette: "classic-dark"
-
-  # Light Mode Color Scheme:
-  # Clean traditional light paper theme
-  # Options: "classic-light", "kanagawa-lotus", "rose-pine-dawn", "gruvbox-light", "catppuccin-latte", "everforest-light", "nord-snow", "solarized-light", "tokyo-night-day"
-  lightPalette: "classic-light"
-
-  # Dark Mode Color Scheme:
-  # Clean traditional charcoal stone dark theme
-  # Options: "classic-dark", "everforest", "nord", "tokyo-night", "rose-pine", "kanagawa", "catppuccin", "solarized-dark", "gruvbox-dark", "monokai-pro"
-  darkPalette: "classic-dark"
-
-  # Default initial color mode on visit: "dark", "light", or "system"
+  # Initial color mode on visit: "light", "dark", or "system"
   colorMode: "light"
 
-  # Sidebar Placement:
-  # Options:
-  #   - "left"  : Docked to the left side
-  #   - "right" : Docked to the right side
-  #   - "popup" : Clean distraction-free view with toggleable slide-over drawer
+  # Light mode palette: "classic-light", "kanagawa-lotus", "rose-pine-dawn", "gruvbox-light", "catppuccin-latte", "everforest-light", "nord-snow", "solarized-light", "tokyo-night-day"
+  lightPalette: "classic-light"
+
+  # Dark mode palette: "classic-dark", "everforest", "nord", "tokyo-night", "rose-pine", "kanagawa", "catppuccin", "solarized-dark", "gruvbox-dark", "monokai-pro"
+  darkPalette: "classic-dark"
+
+  # Sidebar layout: "left" (default), "right", or "popup"
   sidebarPlacement: "left"
 
-  # Background Texture Pattern:
-  # Options: "none", "dots", "grid", "lines", "crosshatch", "blueprint", "noise"
+  # Background texture: "none", "dots", "grid", "lines", "crosshatch", "blueprint", "noise"
   backgroundPattern: "none"
 
-  # Typography: "sans" (modern clean), "serif" (literary book), "mono" (technical)
+  # Typography: "sans", "serif", or "mono"
   fontFamily: "sans"
 
-  # Accent Highlight Color (Optional hex color, comment out to use palette accent)
+  # Optional accent color override (hex):
   # accentColor: "#af3a03"
 
-  # Granular Hex Overrides (Optional — you can override any specific color directly in YAML):
+  # Optional hex overrides for specific UI elements:
   # customColors:
   #   lightBg: "#fbfbfa"
   #   lightSidebar: "#f7f7f6"

@@ -6,8 +6,6 @@ tags: [guides, configuration, themes, styling, typography]
 description: Guide to customizing color palettes, typography styles, background patterns, and author profile details in kyar-kyar.config.yaml.
 ---
 
-# Theming & Customization
-
 All site-wide metadata, author information, visual themes, and layout placements are configured in a single YAML file located at the root of the project: `kyar-kyar.config.yaml`.
 
 ---

@@ -20,6 +20,8 @@ import {
   Moon,
   Sun,
   Pin,
+  Code2,
+  Tag,
 } from 'lucide-react';
 import { FileTreeNode, FolderNode, NoteFileNode, NoteItem, SiteConfig, SidebarPlacement } from '../types';
 
@@ -39,10 +41,11 @@ interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
   placement: SidebarPlacement;
-  onChangePlacement: (placement: SidebarPlacement) => void;
   onOpenSearch: () => void;
   isDark: boolean;
   onToggleColorMode: () => void;
+  isTagsView?: boolean;
+  onViewAllTags?: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -61,10 +64,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
   isOpen,
   onClose,
   placement,
-  onChangePlacement,
   onOpenSearch,
   isDark,
   onToggleColorMode,
+  isTagsView,
+  onViewAllTags,
 }) => {
   const isPopup = placement === 'popup';
   const isRight = placement === 'right';
@@ -99,6 +103,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const folderNodes = React.useMemo(() => {
     return tree.children.filter((child) => child.isFolder) as FolderNode[];
   }, [tree]);
+
+  // Unique tags with counts for tag-wise navigation
+  const tagCounts = React.useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const n of notes) {
+      for (const t of n.tags) {
+        counts[t] = (counts[t] || 0) + 1;
+      }
+    }
+    return Object.entries(counts).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+  }, [notes]);
 
   const renderTreeNode = (node: FileTreeNode, depth = 0) => {
     if (node.isFolder) {
@@ -192,7 +207,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
       >
         <div className="flex items-center gap-1.5 min-w-0 flex-1">
           {fileNode.note.pinned ? (
-            <Pin className="w-3 h-3 text-amber-500 shrink-0 rotate-45" />
+            <Pin className="w-3 h-3 shrink-0 rotate-45" style={{ color: 'var(--text-muted)' }} />
+          ) : fileNode.note.isNotebook ? (
+            <span title="Jupyter Notebook" className="shrink-0 flex items-center">
+              <Code2 
+                className="w-3.5 h-3.5" 
+                style={{ color: 'var(--accent)' }} 
+              />
+            </span>
           ) : (
             <FileText 
               className="w-3.5 h-3.5 shrink-0 opacity-70" 
@@ -490,6 +512,46 @@ export const Sidebar: React.FC<SidebarProps> = ({
               </div>
               <div className="space-y-0.5">
                 {rootNotes.map((rootNode) => renderTreeNode(rootNode, 0))}
+                {/* Clean, single Tags navigation entry (zero clutter) */}
+                {tagCounts.length > 0 && (
+                  <div
+                    onClick={() => {
+                      onViewAllTags?.();
+                      if (isPopup || window.innerWidth < 768) {
+                        onClose();
+                      }
+                    }}
+                    className={`flex items-center justify-between py-1.5 px-2 rounded-md cursor-pointer text-xs font-medium transition-colors select-none ${
+                      isTagsView ? 'font-semibold' : 'hover:opacity-85'
+                    }`}
+                    style={{
+                      paddingLeft: '8px',
+                      backgroundColor: isTagsView ? 'var(--card-main)' : 'transparent',
+                      color: isTagsView ? 'var(--text-heading)' : 'var(--text-main)',
+                      borderLeft: isTagsView ? '2px solid var(--accent)' : '2px solid transparent',
+                    }}
+                    title="Browse all tags"
+                  >
+                    <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                      <span style={{ color: 'var(--text-muted)' }}>
+                        <Tag className="w-3.5 h-3.5" />
+                      </span>
+                      <span className="truncate font-mono">Tags</span>
+                    </div>
+
+                    <span 
+                      className="text-[10px] font-mono px-1.5 py-0.5 rounded border" 
+                      style={{ 
+                        backgroundColor: 'var(--bg-main)',
+                        borderColor: 'var(--border-main)',
+                        color: 'var(--text-muted)' 
+                      }}
+                      title={`${tagCounts.length} unique tags`}
+                    >
+                      {tagCounts.length}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -509,84 +571,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
               </div>
             </div>
           )}
-        </div>
-
-        {/* User-facing layout position toggle: Left, Right, Popup */}
-        <div 
-          className="p-3 border-t shrink-0 select-none"
-          style={{ borderColor: 'var(--border-main)' }}
-        >
-          <div 
-            className="flex items-center justify-between text-[11px] font-mono mb-2"
-            style={{ color: 'var(--text-muted)' }}
-          >
-            <span>Sidebar Layout</span>
-            <span className="capitalize font-semibold" style={{ color: 'var(--accent)' }}>
-              {placement}
-            </span>
-          </div>
-
-          <div 
-            className="grid grid-cols-3 gap-1 p-1 rounded-lg border"
-            style={{ 
-              backgroundColor: 'var(--bg-main)',
-              borderColor: 'var(--border-main)',
-            }}
-          >
-            <button
-              onClick={() => onChangePlacement('left')}
-              className={`flex items-center justify-center gap-1.5 py-1.5 px-2 rounded text-xs font-mono transition-all ${
-                placement === 'left' ? 'font-semibold' : 'hover:opacity-100 opacity-70'
-              }`}
-              style={{
-                backgroundColor: placement === 'left' ? 'var(--card-main)' : 'transparent',
-                borderColor: placement === 'left' ? 'var(--border-main)' : 'transparent',
-                borderWidth: '1px',
-                color: placement === 'left' ? 'var(--text-heading)' : 'var(--text-muted)',
-              }}
-              title="Dock sidebar on left"
-              aria-label="Dock sidebar on left"
-            >
-              <PanelLeft className="w-3.5 h-3.5" style={{ color: placement === 'left' ? 'var(--accent)' : 'inherit' }} />
-              <span>Left</span>
-            </button>
-
-            <button
-              onClick={() => onChangePlacement('right')}
-              className={`flex items-center justify-center gap-1.5 py-1.5 px-2 rounded text-xs font-mono transition-all ${
-                placement === 'right' ? 'font-semibold' : 'hover:opacity-100 opacity-70'
-              }`}
-              style={{
-                backgroundColor: placement === 'right' ? 'var(--card-main)' : 'transparent',
-                borderColor: placement === 'right' ? 'var(--border-main)' : 'transparent',
-                borderWidth: '1px',
-                color: placement === 'right' ? 'var(--text-heading)' : 'var(--text-muted)',
-              }}
-              title="Dock sidebar on right"
-              aria-label="Dock sidebar on right"
-            >
-              <PanelRight className="w-3.5 h-3.5" style={{ color: placement === 'right' ? 'var(--accent)' : 'inherit' }} />
-              <span>Right</span>
-            </button>
-
-            <button
-              onClick={() => onChangePlacement('popup')}
-              className={`flex items-center justify-center gap-1.5 py-1.5 px-2 rounded text-xs font-mono transition-all ${
-                placement === 'popup' ? 'font-semibold' : 'hover:opacity-100 opacity-70'
-              }`}
-              style={{
-                backgroundColor: placement === 'popup' ? 'var(--card-main)' : 'transparent',
-                borderColor: placement === 'popup' ? 'var(--border-main)' : 'transparent',
-                borderWidth: '1px',
-                color: placement === 'popup' ? 'var(--text-heading)' : 'var(--text-muted)',
-              }}
-              title="Slide-over popup drawer"
-              aria-label="Slide-over popup drawer"
-            >
-              <SidebarIcon className="w-3.5 h-3.5" style={{ color: placement === 'popup' ? 'var(--accent)' : 'inherit' }} />
-              <span>Popup</span>
-            </button>
-          </div>
         </div>
 
         {/* Clean minimal footer */}

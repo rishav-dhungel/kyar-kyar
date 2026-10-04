@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { NoteView } from './components/NoteView';
 import { FolderView } from './components/FolderView';
+import { TagsView } from './components/TagsView';
 import { SearchModal } from './components/SearchModal';
 import { OppositeProgressBar } from './components/OppositeProgressBar';
 import { NoteItem, SidebarPlacement } from './types';
@@ -13,7 +14,7 @@ import {
   parseYamlConfig 
 } from './utils/yamlConfig';
 import rawYamlConfig from '../kyar-kyar.config.yaml?raw';
-import { Tag, PanelLeft, PanelRight, Search, Sun, Moon } from 'lucide-react';
+import { PanelLeft, PanelRight, Search, Sun, Moon } from 'lucide-react';
 
 export default function App() {
   // 1. Config parsed directly from kyar-kyar.config.yaml (no localstorage override)
@@ -137,6 +138,15 @@ export default function App() {
     return home ? home.id : notes[0]?.id || '';
   });
 
+  // Tags view state (all tags directory #/tags or filtered tag #/tag/:tag)
+  const [isTagsView, setIsTagsView] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      const hash = window.location.hash;
+      return hash === '#/tags' || hash.startsWith('#/tag/');
+    }
+    return false;
+  });
+
   // Filter tag state with deep-link hash support
   const [selectedTag, setSelectedTag] = useState<string | null>(() => {
     if (typeof window !== 'undefined' && window.location.hash.startsWith('#/tag/')) {
@@ -153,14 +163,19 @@ export default function App() {
     return null;
   });
 
-  // Sync URL hash with active note, folder, or active tag
+  // Sync URL hash with active note, folder, or active tag / tags directory
   useEffect(() => {
-    if (selectedFolder) {
+    if (isTagsView) {
+      if (selectedTag) {
+        window.history.replaceState(null, '', `#/tag/${encodeURIComponent(selectedTag)}`);
+        document.title = `#${selectedTag} — ${config.author}`;
+      } else {
+        window.history.replaceState(null, '', `#/tags`);
+        document.title = `Tags Directory — ${config.author}`;
+      }
+    } else if (selectedFolder) {
       window.history.replaceState(null, '', `#/folder/${encodeURIComponent(selectedFolder)}`);
       document.title = `${selectedFolder}/ — ${config.author}`;
-    } else if (selectedTag) {
-      window.history.replaceState(null, '', `#/tag/${encodeURIComponent(selectedTag)}`);
-      document.title = `#${selectedTag} — ${config.author}`;
     } else {
       const active = notes.find((n) => n.id === activeNoteId);
       if (active) {
@@ -168,21 +183,28 @@ export default function App() {
         document.title = `${active.title} — ${config.author}`;
       }
     }
-  }, [selectedFolder, selectedTag, activeNoteId, notes, config.author]);
+  }, [isTagsView, selectedFolder, selectedTag, activeNoteId, notes, config.author]);
 
   // Listen for browser back/forward buttons
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash;
-      if (hash.startsWith('#/folder/')) {
-        const rawFolder = decodeURIComponent(hash.replace('#/folder/', ''));
-        setSelectedFolder(rawFolder);
+      if (hash === '#/tags') {
+        setIsTagsView(true);
         setSelectedTag(null);
+        setSelectedFolder(null);
       } else if (hash.startsWith('#/tag/')) {
         const rawTag = decodeURIComponent(hash.replace('#/tag/', ''));
+        setIsTagsView(true);
         setSelectedTag(rawTag);
         setSelectedFolder(null);
+      } else if (hash.startsWith('#/folder/')) {
+        const rawFolder = decodeURIComponent(hash.replace('#/folder/', ''));
+        setIsTagsView(false);
+        setSelectedFolder(rawFolder);
+        setSelectedTag(null);
       } else if (hash.startsWith('#/note/')) {
+        setIsTagsView(false);
         setSelectedTag(null);
         setSelectedFolder(null);
         const target = hash.replace('#/note/', '');
@@ -197,23 +219,8 @@ export default function App() {
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, [notes]);
 
-  // User-facing interactive placement state (defaults to YAML, toggleable via frontend buttons at bottom of sidebar)
-  const [placement, setPlacement] = useState<SidebarPlacement>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('kyar_kyar_sidebar_placement') as SidebarPlacement;
-      if (saved && ['left', 'right', 'popup'].includes(saved)) {
-        return saved;
-      }
-    }
-    return config.theme.sidebarPlacement || 'left';
-  });
-
-  const handlePlacementChange = (newPlacement: SidebarPlacement) => {
-    setPlacement(newPlacement);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('kyar_kyar_sidebar_placement', newPlacement);
-    }
-  };
+  // Sidebar layout configured via YAML ("left" by default, or "right", "popup")
+  const placement: SidebarPlacement = config.theme.sidebarPlacement || 'left';
 
   // Modals / Drawers State
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -288,16 +295,9 @@ export default function App() {
       setActiveNoteId(notes[0].id);
     }
     setSelectedTag(null);
+    setSelectedFolder(null);
+    setIsTagsView(false);
   };
-
-  // Tag filter notes view if a tag is active (case-insensitive matching)
-  const tagFilteredNotes = useMemo(() => {
-    if (!selectedTag) return [];
-    const normalizedTag = selectedTag.toLowerCase().trim();
-    return notes.filter((n) =>
-      n.tags.some((t) => t.toLowerCase().trim() === normalizedTag)
-    );
-  }, [notes, selectedTag]);
 
   const patternClass = `pattern-${config.theme.backgroundPattern || 'none'}`;
 
@@ -424,28 +424,39 @@ export default function App() {
             setActiveNoteId(id);
             setSelectedFolder(null);
             setSelectedTag(null);
+            setIsTagsView(false);
             setIsMobileDrawerOpen(false);
           }}
           selectedTag={selectedTag}
           onSelectTag={(tag) => {
             setSelectedTag(tag);
             setSelectedFolder(null);
+            setIsTagsView(Boolean(tag));
             setIsMobileDrawerOpen(false);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
+          isTagsView={isTagsView}
+          onViewAllTags={() => {
+            setIsTagsView(true);
+            setSelectedTag(null);
+            setSelectedFolder(null);
+            setIsMobileDrawerOpen(false);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
           selectedFolder={selectedFolder}
           onSelectFolder={(folder) => {
             setSelectedFolder(folder);
             setSelectedTag(null);
+            setIsTagsView(false);
             setIsMobileDrawerOpen(false);
             window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
           isCollapsed={isSidebarCollapsed}
           onToggleCollapse={toggleSidebarCollapse}
-          activeNote={selectedFolder || selectedTag ? null : activeNote}
+          activeNote={selectedFolder || selectedTag || isTagsView ? null : activeNote}
           isOpen={isMobileDrawerOpen}
           onClose={handleCloseSidebar}
           placement={placement}
-          onChangePlacement={handlePlacementChange}
           onOpenSearch={() => {
             setIsSearchOpen(true);
           }}
@@ -465,146 +476,50 @@ export default function App() {
                 setActiveNoteId(id);
                 setSelectedFolder(null);
                 setSelectedTag(null);
+                setIsTagsView(false);
                 window.scrollTo({ top: 0, behavior: 'smooth' });
               }}
               onSelectFolder={(folder) => {
                 setSelectedFolder(folder);
                 setSelectedTag(null);
+                setIsTagsView(false);
                 window.scrollTo({ top: 0, behavior: 'smooth' });
               }}
               onSelectTag={(tag) => {
                 setSelectedTag(tag);
                 setSelectedFolder(null);
+                setIsTagsView(true);
                 window.scrollTo({ top: 0, behavior: 'smooth' });
               }}
               onBackToHome={() => {
                 setSelectedFolder(null);
+                setSelectedTag(null);
+                setIsTagsView(false);
                 const home = notes.find((n) => n.filePath === 'index.md');
                 if (home) setActiveNoteId(home.id);
                 window.scrollTo({ top: 0, behavior: 'smooth' });
               }}
             />
-          ) : selectedTag ? (
-            /* Tag / Topic Results View */
-            <div className="max-w-3xl mx-auto px-4 sm:px-8 py-10">
-              <div 
-                className="flex items-center justify-between pb-4 mb-6 border-b"
-                style={{ borderColor: 'var(--border-main)' }}
-              >
-                <div className="flex items-center gap-2">
-                  <Tag className="w-5 h-5" style={{ color: 'var(--accent)' }} />
-                  <h1 
-                    className="text-xl font-bold font-mono"
-                    style={{ color: 'var(--text-heading)' }}
-                  >
-                    #{selectedTag}
-                  </h1>
-                  <span className="text-xs font-mono" style={{ color: 'var(--text-muted)' }}>
-                    ({tagFilteredNotes.length} notes)
-                  </span>
-                </div>
-                <button
-                  onClick={() => setSelectedTag(null)}
-                  className="text-xs hover:underline cursor-pointer"
-                  style={{ color: 'var(--accent)' }}
-                >
-                  Clear Tag Filter
-                </button>
-              </div>
-
-              <div className="space-y-3">
-                {tagFilteredNotes.map((note) => (
-                  <div
-                    key={note.id}
-                    onClick={() => {
-                      setActiveNoteId(note.id);
-                      setSelectedTag(null);
-                      setSelectedFolder(null);
-                    }}
-                    title={note.title}
-                    className="group relative p-4 rounded-lg border cursor-pointer transition-all hover:opacity-90"
-                    style={{
-                      backgroundColor: 'var(--card-main)',
-                      borderColor: 'var(--border-main)',
-                    }}
-                  >
-                    <div className="flex items-center justify-between gap-2 mb-1">
-                      <div className="relative group/topic flex-1 min-w-0">
-                        <h3 
-                          title={note.title}
-                          className="font-semibold text-sm truncate group-hover/topic:underline"
-                          style={{ color: 'var(--text-heading)' }}
-                        >
-                          {note.title}
-                        </h3>
-
-                        {/* Floating Full Title Badge on Hover */}
-                        <div 
-                          role="tooltip"
-                          className="absolute left-0 bottom-full mb-1 hidden group-hover:flex items-center z-30 pointer-events-none transition-all duration-150 animate-fadeIn"
-                        >
-                          <div 
-                            className="px-2.5 py-1 text-xs font-medium rounded-md shadow-xl border backdrop-blur-md max-w-sm sm:max-w-md break-words"
-                            style={{
-                              backgroundColor: 'var(--card-main)',
-                              borderColor: 'var(--border-main)',
-                              color: 'var(--text-heading)',
-                            }}
-                          >
-                            {note.title}
-                          </div>
-                        </div>
-                      </div>
-                      {note.date && (
-                        <span className="text-[11px] font-mono shrink-0 ml-2" style={{ color: 'var(--text-muted)' }}>
-                          {note.date}
-                        </span>
-                      )}
-                    </div>
-                    <p 
-                      className="text-xs line-clamp-2"
-                      style={{ color: 'var(--text-muted)' }}
-                    >
-                      {note.description}
-                    </p>
-                    <div 
-                      className="flex items-center gap-2 mt-2 text-[10px] font-mono flex-wrap"
-                      style={{ color: 'var(--text-muted)' }}
-                    >
-                      {note.folder ? <span>folder: {note.folder}</span> : <span>root page</span>}
-                      <span>·</span>
-                      <span>{note.readingTimeMinutes} min read</span>
-                      {note.tags.length > 0 && (
-                        <>
-                          <span>·</span>
-                          <div className="flex items-center gap-1">
-                            {note.tags.map((t) => (
-                              <button
-                                key={t}
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setSelectedTag(t);
-                                  setSelectedFolder(null);
-                                }}
-                                className="px-1.5 py-0.5 rounded text-[10px] font-mono border hover:opacity-80 transition-opacity cursor-pointer"
-                                style={{
-                                  backgroundColor: 'var(--bg-main)',
-                                  borderColor: 'var(--border-main)',
-                                  color: 'var(--accent)',
-                                }}
-                              >
-                                #{t}
-                              </button>
-                            ))}
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+          ) : isTagsView || selectedTag ? (
+            /* Dedicated Tags Directory and Filter View */
+            <TagsView
+              notes={notes}
+              config={config}
+              selectedTag={selectedTag}
+              onSelectTag={(tag) => {
+                setSelectedTag(tag);
+                if (tag) {
+                  setIsTagsView(true);
+                }
+              }}
+              onSelectNote={(id) => {
+                setActiveNoteId(id);
+                setSelectedFolder(null);
+                setSelectedTag(null);
+                setIsTagsView(false);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+            />
           ) : activeNote ? (
             <NoteView
               note={activeNote}
@@ -614,15 +529,18 @@ export default function App() {
                 setActiveNoteId(id);
                 setSelectedFolder(null);
                 setSelectedTag(null);
+                setIsTagsView(false);
               }}
               onSelectFolder={(folder) => {
                 setSelectedFolder(folder);
                 setSelectedTag(null);
+                setIsTagsView(false);
                 window.scrollTo({ top: 0, behavior: 'smooth' });
               }}
               onSelectTag={(tag) => {
                 setSelectedTag(tag);
                 setSelectedFolder(null);
+                setIsTagsView(true);
                 window.scrollTo({ top: 0, behavior: 'smooth' });
               }}
               prevNote={prevNote}
@@ -640,7 +558,7 @@ export default function App() {
       </div>
 
       {/* Reading Progress Indicator opposite of the sidebar */}
-      {!selectedFolder && !selectedTag && activeNote && (
+      {!selectedFolder && !selectedTag && !isTagsView && activeNote && (
         <OppositeProgressBar
           sidebarPlacement={placement}
           headings={activeNote.headings}

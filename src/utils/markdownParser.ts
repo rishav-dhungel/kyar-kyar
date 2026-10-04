@@ -111,7 +111,8 @@ export function processCallouts(text: string): string {
 }
 
 /**
- * Extracts headings h1, h2, h3 for the Table of Contents
+ * Extracts headings h2, h3, h4 for the Table of Contents.
+ * Excludes h1 because h1 represents the document title (which is displayed in the note header).
  */
 export function extractHeadings(markdown: string): NoteHeading[] {
   const headings: NoteHeading[] = [];
@@ -119,7 +120,8 @@ export function extractHeadings(markdown: string): NoteHeading[] {
   const slugCounts = new Map<string, number>();
 
   for (const line of lines) {
-    const match = line.match(/^(#{1,4})\s+(.+)$/);
+    // Only capture level 2, 3, and 4 headings for the Table of Contents
+    const match = line.match(/^(#{2,4})\s+(.+)$/);
     if (match) {
       const level = match[1].length;
       const text = match[2].trim().replace(/\[\[.*?\]\]/g, (m) => m.replace(/\[\[|\]\]/g, ''));
@@ -172,13 +174,33 @@ export function processInlineTags(text: string): string {
 }
 
 /**
- * Full parsing pipeline from raw markdown to enriched note data
+ * Full parsing pipeline from raw markdown to enriched note data.
+ * Enforces single title: if title is in meta or starts in body, only one title is used.
  */
 export function parseNoteMarkdown(raw: string, fallbackTitle: string): ParsedMarkdown {
   const { frontmatter, content } = extractFrontmatter(raw);
 
+  // Single Title Enforcement:
+  // If the markdown body begins with an H1 (# Title), extract it if frontmatter.title is missing,
+  // and strip it from the body so there is never a duplicate title rendered in the body.
+  let cleanedContent = content;
+  const leadingH1Match = cleanedContent.match(/^\s*#\s+([^\n\r]+)(?:\r?\n|$)/);
+  if (leadingH1Match) {
+    const rawHeadingText = leadingH1Match[1].trim().replace(/\[\[.*?\]\]/g, (m) => m.replace(/\[\[|\]\]/g, ''));
+    if (!frontmatter.title) {
+      frontmatter.title = rawHeadingText;
+    }
+    // Remove the leading H1 from the body content
+    cleanedContent = cleanedContent.replace(/^\s*#\s+[^\n\r]+(?:\r?\n|$)/, '').trim();
+  } else if (frontmatter.title) {
+    // If frontmatter already has a title, check if the first heading in content is an H1 with matching title
+    const escaped = frontmatter.title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const duplicateH1Regex = new RegExp(`^\\s*#\\s+${escaped}\\s*(?:\\r?\\n|$)`, 'im');
+    cleanedContent = cleanedContent.replace(duplicateH1Regex, '').trim();
+  }
+
   // Extract inline tags and combine with frontmatter tags
-  const inlineTags = extractInlineTags(content);
+  const inlineTags = extractInlineTags(cleanedContent);
   const rawTags = frontmatter.tags || [];
   const fmTags = Array.isArray(rawTags)
     ? rawTags.map(String)
@@ -188,11 +210,11 @@ export function parseNoteMarkdown(raw: string, fallbackTitle: string): ParsedMar
 
   const combinedTags = Array.from(new Set([...fmTags, ...inlineTags]));
 
-  // Headings
-  const headings = extractHeadings(content);
+  // Headings (H2, H3, H4) for Table of Contents
+  const headings = extractHeadings(cleanedContent);
 
   // Process Callouts
-  const withCallouts = processCallouts(content);
+  const withCallouts = processCallouts(cleanedContent);
 
   // Process Inline Tags into clickable links
   const withTags = processInlineTags(withCallouts);
@@ -239,7 +261,7 @@ export function parseNoteMarkdown(raw: string, fallbackTitle: string): ParsedMar
   const html = marked.parse(processedText) as string;
 
   // Words and reading time
-  const cleanWordContent = content.replace(/<[^>]*>/g, ' ').replace(/[#*_`~-]/g, ' ');
+  const cleanWordContent = cleanedContent.replace(/<[^>]*>/g, ' ').replace(/[#*_`~-]/g, ' ');
   const words = cleanWordContent.trim().split(/\s+/).filter(Boolean);
   const wordCount = words.length;
   const readingTimeMinutes = Math.max(1, Math.ceil(wordCount / 200));
@@ -249,7 +271,7 @@ export function parseNoteMarkdown(raw: string, fallbackTitle: string): ParsedMar
 
   return {
     frontmatter,
-    content,
+    content: cleanedContent,
     html,
     headings,
     forwardLinks,

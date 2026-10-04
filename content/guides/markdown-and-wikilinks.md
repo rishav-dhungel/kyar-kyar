@@ -6,8 +6,6 @@ tags: [guides, markdown, wikilinks, callouts, syntax]
 description: Guide on using Obsidian-compatible wikilinks, frontmatter, callout admonitions, code blocks, and tags in kyar-kyar.
 ---
 
-# Markdown Syntax & Wikilinks
-
 **kyar-kyar** supports standard CommonMark, GitHub-Flavored Markdown (GFM), and Obsidian-style extensions like `[[wikilinks]]` and `[!callouts]`.
 
 ---
@@ -51,6 +49,9 @@ You can connect documents using double square brackets:
 ```
 
 When you link to another note, **kyar-kyar** automatically computes reciprocal backlinks and displays them under the **Linked References** section at the bottom of the target document.
+
+> [!tip] Automatic Clean Footers
+> The **Linked References** section only appears at the bottom of a page when other notes link to it. Documents without incoming links maintain a clean, distraction-free reading footer.
 
 ---
 

@@ -7,11 +7,13 @@ import {
   Check, 
   ChevronLeft, 
   ChevronRight, 
+  ChevronDown,
   ArrowUpRight,
-  Pin
+  Pin,
+  Code2,
+  List
 } from 'lucide-react';
 import { NoteItem, SiteConfig } from '../types';
-import { TableOfContents } from './TableOfContents';
 import { resolveNote } from '../utils/noteResolver';
 
 interface NoteViewProps {
@@ -37,7 +39,29 @@ export const NoteView: React.FC<NoteViewProps> = ({
 }) => {
   const contentRef = useRef<HTMLDivElement | null>(null);
   const articleRef = useRef<HTMLElement | null>(null);
+  const tocMenuRef = useRef<HTMLDivElement | null>(null);
   const [copiedLink, setCopiedLink] = useState(false);
+  const [isTocOpen, setIsTocOpen] = useState(false);
+
+  // Close TOC dropdown when clicking outside
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (tocMenuRef.current && !tocMenuRef.current.contains(e.target as Node)) {
+        setIsTocOpen(false);
+      }
+    };
+    if (isTocOpen) {
+      document.addEventListener('mousedown', handleOutsideClick);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+    };
+  }, [isTocOpen]);
+
+  // Reset TOC menu state on note change
+  useEffect(() => {
+    setIsTocOpen(false);
+  }, [note.id]);
 
   // Intercept wikilink clicks inside the rendered markdown HTML
   useEffect(() => {
@@ -155,12 +179,6 @@ export const NoteView: React.FC<NoteViewProps> = ({
       .filter((n): n is NoteItem => Boolean(n));
   }, [note.backlinks, allNotes]);
 
-  // Subpages in same folder
-  const siblingNotes = React.useMemo(() => {
-    if (!note.folder) return [];
-    return allNotes.filter((n) => n.folder === note.folder && n.id !== note.id);
-  }, [allNotes, note.folder, note.id]);
-
   const handleCopyLink = () => {
     const url = `${window.location.origin}${window.location.pathname}#/note/${note.slug}`;
     navigator.clipboard.writeText(url);
@@ -222,10 +240,86 @@ export const NoteView: React.FC<NoteViewProps> = ({
           </span>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 relative">
+          {/* Minimal Table of Contents Top Toggle Icon */}
+          {config.navigation.showTableOfContents && note.headings.length > 0 && (
+            <div className="relative" ref={tocMenuRef}>
+              <button
+                type="button"
+                onClick={() => setIsTocOpen(!isTocOpen)}
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-md transition-colors border hover:opacity-85 text-xs font-mono cursor-pointer"
+                style={{
+                  backgroundColor: isTocOpen 
+                    ? 'color-mix(in srgb, var(--accent) 15%, var(--card-main))' 
+                    : 'var(--card-main)',
+                  borderColor: isTocOpen ? 'var(--accent)' : 'var(--border-main)',
+                  color: isTocOpen ? 'var(--accent)' : 'var(--text-muted)',
+                }}
+                title="Table of contents outline"
+                aria-label="Table of contents"
+                aria-expanded={isTocOpen}
+              >
+                <List className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">TOC</span>
+                <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${isTocOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {/* Minimal Popover Outline */}
+              {isTocOpen && (
+                <div
+                  className="absolute right-0 top-full mt-2 w-72 max-w-[90vw] max-h-80 overflow-y-auto rounded-lg border shadow-xl z-50 p-2.5 animate-fadeIn"
+                  style={{
+                    backgroundColor: 'var(--card-main)',
+                    borderColor: 'var(--border-main)',
+                  }}
+                >
+                  <div 
+                    className="flex items-center justify-between pb-2 mb-2 border-b text-[10px] font-mono"
+                    style={{ borderColor: 'var(--border-main)', color: 'var(--text-muted)' }}
+                  >
+                    <span className="font-semibold uppercase tracking-wider" style={{ color: 'var(--text-heading)' }}>
+                      Outline
+                    </span>
+                    <span>{note.headings.length} sections</span>
+                  </div>
+
+                  <nav className="flex flex-col gap-0.5">
+                    {note.headings.map((heading) => {
+                      const minLevel = Math.min(...note.headings.map((h) => h.level));
+                      const depth = Math.max(0, heading.level - minLevel);
+                      return (
+                        <a
+                          key={heading.slug}
+                          href={`#${heading.slug}`}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setIsTocOpen(false);
+                            const el = document.getElementById(heading.slug);
+                            if (el) {
+                              const top = el.getBoundingClientRect().top + window.scrollY - 80;
+                              window.scrollTo({ top, behavior: 'smooth' });
+                            }
+                          }}
+                          className="py-1 px-2 rounded text-xs transition-colors hover:bg-opacity-80 block truncate font-mono text-[11px]"
+                          style={{
+                            paddingLeft: `${depth * 10 + 8}px`,
+                            color: 'var(--text-main)',
+                          }}
+                          title={heading.text}
+                        >
+                          {heading.text}
+                        </a>
+                      );
+                    })}
+                  </nav>
+                </div>
+              )}
+            </div>
+          )}
+
           <button
             onClick={handleCopyLink}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-md transition-colors border hover:opacity-80"
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-md transition-colors border hover:opacity-80 cursor-pointer"
             style={{
               backgroundColor: 'var(--card-main)',
               borderColor: 'var(--border-main)',
@@ -253,7 +347,7 @@ export const NoteView: React.FC<NoteViewProps> = ({
         <div className="flex items-start gap-2.5 mb-3">
           {note.pinned && (
             <span title="Pinned Note">
-              <Pin className="w-5 h-5 text-amber-500 shrink-0 mt-1 rotate-45" />
+              <Pin className="w-4 h-4 shrink-0 mt-1 rotate-45" style={{ color: 'var(--text-muted)' }} />
             </span>
           )}
           <h1 
@@ -269,11 +363,29 @@ export const NoteView: React.FC<NoteViewProps> = ({
           className="flex flex-wrap items-center gap-y-1.5 gap-x-2.5 text-xs font-mono"
           style={{ color: 'var(--text-muted)' }}
         >
-          {note.date && (
-            <span className="flex items-center gap-1.5">
-              <Calendar className="w-3.5 h-3.5" />
-              <span>{note.date}</span>
+          {note.isNotebook && (
+            <span 
+              className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-mono border"
+              style={{
+                backgroundColor: 'color-mix(in srgb, var(--accent) 10%, transparent)',
+                borderColor: 'color-mix(in srgb, var(--accent) 30%, transparent)',
+                color: 'var(--accent)',
+              }}
+              title="Converted Jupyter Notebook"
+            >
+              <Code2 className="w-3.5 h-3.5" />
+              <span>Jupyter ({note.notebookKernel || note.notebookLanguage || 'Python'})</span>
             </span>
+          )}
+
+          {note.date && (
+            <>
+              {note.isNotebook && <span aria-hidden="true" style={{ color: 'var(--border-main)' }}>·</span>}
+              <span className="flex items-center gap-1.5">
+                <Calendar className="w-3.5 h-3.5" />
+                <span>{note.date}</span>
+              </span>
+            </>
           )}
 
           {config.navigation.showReadingTime && (
@@ -302,37 +414,8 @@ export const NoteView: React.FC<NoteViewProps> = ({
               </span>
             </>
           )}
-
-          {note.tags.length > 0 && (
-            <>
-              <span aria-hidden="true" style={{ color: 'var(--border-main)' }}>·</span>
-              <div className="flex items-center gap-1.5 flex-wrap">
-                {note.tags.map((tag) => (
-                  <button 
-                    key={tag}
-                    type="button"
-                    onClick={() => onSelectTag?.(tag)}
-                    className="px-2 py-0.5 rounded text-[11px] font-mono border hover:opacity-80 active:scale-95 transition-all cursor-pointer inline-flex items-center"
-                    style={{ 
-                      backgroundColor: 'var(--card-main)',
-                      borderColor: 'var(--border-main)',
-                      color: 'var(--accent)' 
-                    }}
-                    title={`View all notes tagged #${tag}`}
-                  >
-                    #{tag}
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
         </div>
       </header>
-
-      {/* Table of Contents */}
-      {config.navigation.showTableOfContents && note.headings.length > 1 && (
-        <TableOfContents headings={note.headings} />
-      )}
 
       {/* Main Markdown Body */}
       <div
@@ -341,69 +424,8 @@ export const NoteView: React.FC<NoteViewProps> = ({
         dangerouslySetInnerHTML={{ __html: note.html || note.content }}
       />
 
-      {/* Folder Subpages / Siblings Section */}
-      {note.folder && (
-        <section 
-          className="mt-12 p-4 sm:p-5 rounded-lg border"
-          style={{
-            backgroundColor: 'var(--card-main)',
-            borderColor: 'var(--border-main)',
-          }}
-        >
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <Folder className="w-4 h-4" style={{ color: 'var(--accent)' }} />
-              <h3 
-                className="text-xs font-semibold uppercase tracking-wider font-mono"
-                style={{ color: 'var(--text-heading)' }}
-              >
-                In folder: {note.folder}
-              </h3>
-            </div>
-            <button
-              type="button"
-              onClick={() => onSelectFolder?.(note.folder)}
-              className="text-xs font-mono hover:underline flex items-center gap-1 cursor-pointer"
-              style={{ color: 'var(--accent)' }}
-            >
-              <span>View folder index</span>
-              <ArrowUpRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
-
-          {siblingNotes.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
-              {siblingNotes.map((sib) => (
-                <div
-                  key={sib.id}
-                  onClick={() => onSelectNote(sib.id)}
-                  className="p-2.5 rounded-md border text-xs cursor-pointer hover:opacity-85 transition-opacity flex items-center justify-between"
-                  style={{
-                    backgroundColor: 'var(--sidebar-main)',
-                    borderColor: 'var(--border-main)',
-                  }}
-                >
-                  <span className="truncate font-medium" style={{ color: 'var(--text-main)' }}>
-                    {sib.title}
-                  </span>
-                  {sib.readingTimeMinutes && (
-                    <span className="text-[10px] font-mono shrink-0 ml-2" style={{ color: 'var(--text-muted)' }}>
-                      {sib.readingTimeMinutes} min
-                    </span>
-                  )}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-xs font-mono" style={{ color: 'var(--text-muted)' }}>
-              This is the only document in {note.folder}/.
-            </p>
-          )}
-        </section>
-      )}
-
-      {/* Linked References / Backlinks Section */}
-      {config.navigation.showBacklinks && (
+      {/* Linked References / Backlinks Section - Only shown when other notes actively link to this document */}
+      {config.navigation.showBacklinks && backlinkNotes.length > 0 && (
         <section 
           className="mt-14 pt-8 border-t"
           style={{ borderColor: 'var(--border-main)' }}
@@ -415,26 +437,12 @@ export const NoteView: React.FC<NoteViewProps> = ({
             >
               Linked References ({backlinkNotes.length})
             </h3>
-            {backlinkNotes.length > 0 && (
-              <span className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
-                Notes that mention this document
-              </span>
-            )}
+            <span className="text-[11px]" style={{ color: 'var(--text-muted)' }}>
+              Notes that link to this document
+            </span>
           </div>
 
-          {backlinkNotes.length === 0 ? (
-            <div 
-              className="p-4 rounded-lg border border-dashed text-xs text-center"
-              style={{ 
-                backgroundColor: 'var(--card-main)', 
-                borderColor: 'var(--border-main)',
-                color: 'var(--text-muted)' 
-              }}
-            >
-              No other notes link to this note yet. Use <code className="font-mono">[[{note.title}]]</code> in any note to connect them.
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {backlinkNotes.map((backNote) => (
                 <div
                   key={backNote.id}
@@ -473,7 +481,6 @@ export const NoteView: React.FC<NoteViewProps> = ({
                 </div>
               ))}
             </div>
-          )}
         </section>
       )}
 

@@ -6,8 +6,6 @@ tags: [guides, hosting, deployment, github-pages, cloudflare, kyar-kyar]
 description: Complete step-by-step guide for authoring notes in /content/ and deploying your kyar-kyar blog to GitHub Pages and Cloudflare Pages.
 ---
 
-# Hosting & Authoring Guide: kyar-kyar
-
 Welcome to **kyar-kyar**, the minimal, high-performance personal blog and digital garden static site generator.
 
 This updated guide covers everything you need to know about the latest version:
