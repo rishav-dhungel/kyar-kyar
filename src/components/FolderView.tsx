@@ -116,9 +116,9 @@ export const FolderView: React.FC<FolderViewProps> = ({
   }, [folderNotes, searchQuery, sortBy]);
 
   const cleanFolderName = folderPath.split('/').pop() || folderPath;
-  const fontClass = config.theme.fontFamily === 'serif' 
+  const fontClass = config?.theme?.fontFamily === 'serif' 
     ? 'font-serif' 
-    : config.theme.fontFamily === 'mono' 
+    : config?.theme?.fontFamily === 'mono' 
       ? 'font-mono' 
       : 'font-sans';
 
@@ -433,7 +433,7 @@ export const FolderView: React.FC<FolderViewProps> = ({
           className="font-mono text-[11px] tracking-wide"
           style={{ color: 'var(--text-muted)' }}
         >
-          {config.footer?.text || `© ${config.author} ${new Date().getFullYear()}`}
+          {config?.footer?.text || `© ${config?.author || 'Kyar-Kyar'} ${new Date().getFullYear()}`}
         </div>
       </footer>
     </div>

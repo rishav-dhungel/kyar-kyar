@@ -25,20 +25,23 @@ export default function App() {
 
   // 2. Color Mode Calibration (defaults to YAML or prefers-color-scheme)
   const [isDark, setIsDark] = useState<boolean>(() => {
-    if (config.theme.colorMode === 'dark') return true;
-    if (config.theme.colorMode === 'light') return false;
-    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if (config?.theme?.colorMode === 'dark') return true;
+    if (config?.theme?.colorMode === 'light') return false;
+    if (typeof window !== 'undefined' && window.matchMedia) {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches;
+    }
+    return false;
   });
 
   // Calculate active calibrated palette based on YAML config presets & isDark toggle
   const activePalette = useMemo(() => {
     if (!isDark) {
-      const lightKey = config.theme.lightPalette || 'classic-light';
+      const lightKey = config?.theme?.lightPalette || 'classic-light';
       return CALIBRATED_PALETTES[lightKey] || CALIBRATED_PALETTES['classic-light'];
     }
-    const darkKey = config.theme.darkPalette || config.theme.palette || 'classic-dark';
+    const darkKey = config?.theme?.darkPalette || config?.theme?.palette || 'classic-dark';
     return CALIBRATED_PALETTES[darkKey] || CALIBRATED_PALETTES['classic-dark'];
-  }, [config.theme.lightPalette, config.theme.darkPalette, config.theme.palette, isDark]);
+  }, [config?.theme?.lightPalette, config?.theme?.darkPalette, config?.theme?.palette, isDark]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -341,7 +344,7 @@ export default function App() {
     setIsPinnedView(false);
   };
 
-  const patternClass = `pattern-${config.theme.backgroundPattern || 'none'}`;
+  const patternClass = `pattern-${config?.theme?.backgroundPattern || 'none'}`;
 
   // Determine container flex direction based on placement
   let layoutDirectionClass = '';
@@ -391,7 +394,7 @@ export default function App() {
             className="font-bold text-sm tracking-tight truncate hover:opacity-80 text-left"
             style={{ color: 'var(--text-heading)' }}
           >
-            {config.title || config.author}
+            {config?.title || config?.author || 'Kyar-Kyar'}
           </button>
         </div>
 

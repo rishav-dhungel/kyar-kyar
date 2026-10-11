@@ -92,7 +92,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           className="text-xs font-semibold tracking-tight hover:opacity-80 transition-opacity truncate hidden sm:inline ml-1 cursor-pointer"
           style={{ color: 'var(--text-heading)' }}
         >
-          {config.author}
+          {config?.author || 'Kyar-Kyar'}
         </button>
 
         {/* Breadcrumb path for the active note */}

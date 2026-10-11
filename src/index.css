@@ -13,8 +13,8 @@
   html, body, #root {
     font-family: var(--font-active);
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
-    background-color: var(--bg-main, #002b36);
-    color: var(--text-main, #93a1a1);
+    background-color: var(--bg-main, #fbfbfa);
+    color: var(--text-main, #1c1917);
   }
 
   button, input, select, textarea, kbd {
@@ -24,6 +24,7 @@
 
 /* 
  * UNIFORM TYPOGRAPHY ENFORCEMENT
+ * Clean, high-performance font-family inheritance
  */
 html[data-font="mono"],
 html[data-font="mono"] body,
@@ -86,7 +87,7 @@ pre, code, pre *, code *, .code-block, .code-block * {
   font-family: var(--font-mono) !important;
 }
 
-/* Background Patterns & Textures */
+/* Background Patterns & Textures - Clean, 60fps GPU-accelerated */
 .pattern-dots {
   background-image: radial-gradient(var(--pattern-color) 1.25px, transparent 1.25px);
   background-size: 24px 24px;
@@ -117,6 +118,7 @@ pre, code, pre *, code *, .code-block, .code-block * {
   background-size: 100px 100px, 100px 100px, 20px 20px, 20px 20px;
 }
 
+/* Lightweight micro-dot tactile texture without expensive SVG filter turbulence */
 .pattern-noise {
   background-image: radial-gradient(var(--pattern-color) 0.75px, transparent 0.75px);
   background-size: 6px 6px;
@@ -126,7 +128,7 @@ pre, code, pre *, code *, .code-block, .code-block * {
   background-image: none;
 }
 
-/* Callout / Admonition Styles — 1px dotted all-around border */
+/* Callout / Admonition Styles */
 .callout {
   margin: 1.5rem 0;
   padding: 1rem 1.25rem;
@@ -320,56 +322,70 @@ pre, code, pre *, code *, .code-block, .code-block * {
   margin: 1.25rem 0;
   padding: 1rem 1.25rem;
   border-radius: 0.5rem;
+  overflow-x: auto;
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
   background-color: var(--code-bg);
   border: 1px solid var(--border-main);
-  overflow-x: auto;
-  font-size: 0.88rem;
-  line-height: 1.55;
-  position: relative;
+  color: var(--text-main);
+  line-height: 1.5;
 }
 
-.markdown-body pre code {
-  background: transparent;
-  padding: 0;
-  border: 0;
-  font-size: inherit;
-  color: inherit;
-}
-
-/* Heading Anchors */
 .anchor-heading {
   position: relative;
 }
 
-.anchor-heading .heading-anchor {
+.heading-anchor {
   position: absolute;
   left: -1.25rem;
   opacity: 0;
+  color: var(--accent);
   text-decoration: none;
-  color: var(--text-muted);
   font-weight: normal;
-  transition: opacity 0.15s ease;
+  transition: opacity 0.15s ease-in-out;
 }
 
 .anchor-heading:hover .heading-anchor {
   opacity: 0.65;
 }
 
-/* Custom Scrollbars */
+/* Interactive Tag Badges */
+.tag-link {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  padding: 0.05rem 0.4rem;
+  margin: 0 0.15rem;
+  border-radius: 0.25rem;
+  background-color: var(--card-main);
+  border: 1px solid var(--border-main);
+  color: var(--accent);
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+  vertical-align: baseline;
+}
+
+.tag-link:hover {
+  border-color: var(--accent);
+  opacity: 0.9;
+  text-decoration: none;
+  transform: translateY(-0.5px);
+}
+
+/* Custom scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
-
 ::-webkit-scrollbar-track {
   background: transparent;
 }
-
 ::-webkit-scrollbar-thumb {
   background: var(--border-main);
-  border-radius: 3px;
+  border-radius: 9999px;
 }
-
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-muted);
 }

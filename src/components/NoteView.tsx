@@ -245,9 +245,9 @@ export const NoteView: React.FC<NoteViewProps> = ({
   };
 
   const fontClass = 
-    config.theme.fontFamily === 'serif'
+    config?.theme?.fontFamily === 'serif'
       ? 'font-serif'
-      : config.theme.fontFamily === 'mono'
+      : config?.theme?.fontFamily === 'mono'
       ? 'font-mono'
       : 'font-sans';
 
@@ -321,7 +321,7 @@ export const NoteView: React.FC<NoteViewProps> = ({
           )}
 
           {/* Minimal Table of Contents Top Toggle Icon */}
-          {config.navigation.showTableOfContents && note.headings.length > 0 && (
+          {config?.navigation?.showTableOfContents && note.headings.length > 0 && (
             <div className="relative" ref={tocMenuRef}>
               <button
                 type="button"
@@ -470,7 +470,7 @@ export const NoteView: React.FC<NoteViewProps> = ({
             </>
           )}
 
-          {config.navigation.showReadingTime && (
+          {config?.navigation?.showReadingTime && (
             <>
               <span aria-hidden="true" style={{ color: 'var(--border-main)' }}>·</span>
               <span className="flex items-center gap-1.5">
@@ -480,7 +480,7 @@ export const NoteView: React.FC<NoteViewProps> = ({
             </>
           )}
 
-          {config.navigation.showWordCount && (
+          {config?.navigation?.showWordCount && (
             <>
               <span aria-hidden="true" style={{ color: 'var(--border-main)' }}>·</span>
               <span>{note.wordCount} words</span>
@@ -507,7 +507,7 @@ export const NoteView: React.FC<NoteViewProps> = ({
       />
 
       {/* Linked References — Academic Research Paper Footer Style */}
-      {config.navigation.showBacklinks && backlinkNotes.length > 0 && (
+      {config?.navigation?.showBacklinks && backlinkNotes.length > 0 && (
         <section 
           className="mt-14 pt-8 border-t text-xs"
           style={{ borderColor: 'var(--border-main)' }}
@@ -649,7 +649,7 @@ export const NoteView: React.FC<NoteViewProps> = ({
           className="font-mono text-[11px] tracking-wide"
           style={{ color: 'var(--text-muted)' }}
         >
-          {config.footer.text}
+          {config?.footer?.text || `© ${config?.author || 'Kyar-Kyar'} ${new Date().getFullYear()}`}
         </div>
       </footer>
     </article>

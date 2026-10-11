@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Folder, 
   FolderOpen, 
@@ -10,13 +10,20 @@ import {
   Linkedin, 
   Mail, 
   X,
+  Compass,
+  PanelLeft,
+  PanelRight,
+  PanelLeftClose,
+  PanelRightClose,
+  Sidebar as SidebarIcon,
   Search,
   Moon,
   Sun,
   Pin,
+  Code2,
   Tag,
 } from 'lucide-react';
-import { FileTreeNode, FolderNode, NoteFileNode, NoteItem, SiteConfig, SidebarPlacement, SidebarMode } from '../types';
+import { FileTreeNode, FolderNode, NoteFileNode, NoteItem, SiteConfig, SidebarPlacement } from '../types';
 
 interface SidebarProps {
   config: SiteConfig;
@@ -31,11 +38,6 @@ interface SidebarProps {
   onSelectFolder?: (folderPath: string) => void;
   isCollapsed: boolean;
   onToggleCollapse: () => void;
-  sidebarMode: SidebarMode;
-  onSetSidebarMode: (mode: SidebarMode) => void;
-  isAutoPeekOpen?: boolean;
-  onMouseEnter?: () => void;
-  onMouseLeave?: () => void;
   isOpen: boolean;
   onClose: () => void;
   placement: SidebarPlacement;
@@ -59,11 +61,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onSelectTag,
   selectedFolder,
   onSelectFolder,
-  sidebarMode,
-  onSetSidebarMode,
-  isAutoPeekOpen = false,
-  onMouseEnter,
-  onMouseLeave,
+  isCollapsed,
+  onToggleCollapse,
   isOpen,
   onClose,
   placement,
@@ -78,18 +77,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const isPopup = placement === 'popup';
   const isRight = placement === 'right';
 
-  // Track expanded state of folders
+  // Store expanded state of folder paths
   const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>(() => {
     const initial: Record<string, boolean> = {};
-    const expandAll = (node: FolderNode) => {
-      initial[node.path] = config.navigation.defaultExpandedFolders;
+    function populate(node: FolderNode) {
+      initial[node.path] = config?.navigation?.defaultExpandedFolders ?? true;
       for (const child of node.children) {
         if (child.isFolder) {
-          expandAll(child);
+          populate(child);
         }
       }
-    };
-    expandAll(tree);
+    }
+    populate(tree);
     return initial;
   });
 
@@ -100,38 +99,49 @@ export const Sidebar: React.FC<SidebarProps> = ({
     }));
   };
 
-  const pinnedNotes = notes.filter((n) => n.pinned);
+  // Separate root-level notes (outside folders) from folders
+  const rootNotes = React.useMemo(() => {
+    return tree.children.filter((child) => !child.isFolder) as NoteFileNode[];
+  }, [tree]);
 
-  // Collect distinct tags for quick tag browsing
-  const allTags = React.useMemo(() => {
-    const set = new Set<string>();
-    for (const n of notes) {
-      for (const t of n.tags) {
-        set.add(t);
-      }
-    }
-    return Array.from(set).sort();
+  // Global pinned notes
+  const pinnedNotes = React.useMemo(() => {
+    return notes.filter((n) => n.pinned);
   }, [notes]);
 
-  // Separate root-level notes from folders
-  const rootNotes = tree.children.filter((child): child is NoteFileNode => !child.isFolder);
-  const folderNodes = tree.children.filter((child): child is FolderNode => child.isFolder);
+  // Root-level notes that are NOT pinned (avoids duplicating in navigation)
+  const unpinnedRootNotes = React.useMemo(() => {
+    return rootNotes.filter((rn) => !rn.note.pinned);
+  }, [rootNotes]);
+
+  const folderNodes = React.useMemo(() => {
+    return tree.children.filter((child) => child.isFolder) as FolderNode[];
+  }, [tree]);
+
+  // Unique tags with counts for tag-wise navigation
+  const tagCounts = React.useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const n of notes) {
+      for (const t of n.tags) {
+        counts[t] = (counts[t] || 0) + 1;
+      }
+    }
+    return Object.entries(counts).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+  }, [notes]);
 
   const renderTreeNode = (node: FileTreeNode, depth = 0) => {
     if (node.isFolder) {
       const folder = node as FolderNode;
-      const isExpanded = expandedFolders[folder.path] ?? false;
+      const isExpanded = expandedFolders[folder.path] !== false;
+
       const isFolderActive = selectedFolder === folder.path;
 
       return (
-        <div key={folder.path} className="space-y-0.5 select-none">
-          <div
+        <div key={`folder-${folder.path}`} className="select-none my-0.5">
+          <div 
             onClick={() => {
-              if (onSelectFolder) {
-                onSelectFolder(folder.path);
-              } else {
-                toggleFolder(folder.path);
-              }
+              if (!isExpanded) toggleFolder(folder.path);
+              onSelectFolder?.(folder.path);
               if (isPopup || window.innerWidth < 768) {
                 onClose();
               }
@@ -175,31 +185,68 @@ export const Sidebar: React.FC<SidebarProps> = ({
       );
     }
 
+    // Note file
     const fileNode = node as NoteFileNode;
-    const isNoteActive = fileNode.noteId === activeNoteId && !selectedFolder && !selectedTag && !isTagsView && !isPinnedView;
+    const isActive = fileNode.noteId === activeNoteId;
 
     return (
       <div
-        key={fileNode.path}
+        key={`file-${fileNode.noteId}`}
         onClick={() => {
           onSelectNote(fileNode.noteId);
           if (isPopup || window.innerWidth < 768) {
             onClose();
           }
         }}
-        className={`group relative flex items-center justify-between py-1.5 px-2 rounded-md cursor-pointer text-xs transition-colors ${
-          isNoteActive ? 'font-medium shadow-xs' : 'hover:opacity-85'
+        title={fileNode.note.title}
+        className={`group relative flex items-center justify-between py-1.5 px-2 rounded-md text-xs cursor-pointer transition-colors ${
+          isActive ? 'font-medium shadow-xs' : 'hover:opacity-85'
         }`}
         style={{ 
-          paddingLeft: `${depth * 12 + 8}px`,
-          backgroundColor: isNoteActive ? 'var(--card-main)' : 'transparent',
-          color: isNoteActive ? 'var(--text-heading)' : 'var(--text-main)',
-          border: isNoteActive ? '1px solid var(--border-main)' : '1px solid transparent',
+          paddingLeft: `${depth * 12 + 16}px`,
+          backgroundColor: isActive ? 'var(--card-main)' : 'transparent',
+          color: isActive ? 'var(--text-heading)' : 'var(--text-main)',
+          border: isActive ? '1px solid var(--border-main)' : '1px solid transparent',
         }}
       >
         <div className="flex items-center gap-1.5 min-w-0 flex-1">
-          <FileText className="w-3 h-3 shrink-0" style={{ color: isNoteActive ? 'var(--accent)' : 'var(--text-muted)' }} />
-          <div className="truncate flex-1 font-mono text-[11px]">
+          {fileNode.note.pinned ? (
+            <Pin className="w-3 h-3 shrink-0 rotate-45" style={{ color: 'var(--text-muted)' }} />
+          ) : fileNode.note.isNotebook ? (
+            <span title="Jupyter Notebook" className="shrink-0 flex items-center">
+              <Code2 
+                className="w-3.5 h-3.5" 
+                style={{ color: 'var(--text-muted)' }} 
+              />
+            </span>
+          ) : (
+            <FileText 
+              className="w-3.5 h-3.5 shrink-0 opacity-70" 
+              style={{ color: 'var(--text-muted)' }} 
+            />
+          )}
+          <span className="truncate flex-1" title={fileNode.note.title}>{fileNode.note.title}</span>
+        </div>
+
+        {fileNode.note.date && (
+          <span className="text-[10px] font-mono hidden group-hover:inline shrink-0 ml-1" style={{ color: 'var(--text-muted)' }}>
+            {fileNode.note.date.slice(5)}
+          </span>
+        )}
+
+        {/* Hover Tooltip displaying full title of topic */}
+        <div 
+          role="tooltip"
+          className={`absolute ${isRight ? 'right-full mr-2' : 'left-full ml-2'} top-1/2 -translate-y-1/2 hidden group-hover:flex items-center z-50 pointer-events-none transition-all duration-150 animate-fadeIn`}
+        >
+          <div 
+            className="px-2.5 py-1 text-xs rounded-md shadow-xl border whitespace-normal max-w-xs break-words font-medium backdrop-blur-md"
+            style={{
+              backgroundColor: 'var(--card-main)',
+              borderColor: 'var(--border-main)',
+              color: 'var(--text-heading)',
+            }}
+          >
             {fileNode.note.title}
           </div>
         </div>
@@ -207,6 +254,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
     );
   };
 
+  // Normal flow positioning:
+  // - If popup mode: overlay drawer on all screens
+  // - If left or right:
+  //     - On Mobile (<768px): fixed slide-in drawer controlled by isOpen
+  //     - On Desktop (>=768px): docked in normal page flow (sticky top-0 h-screen). If isCollapsed, width is 0.
   let positioningClasses = '';
   if (isPopup) {
     positioningClasses = `fixed top-0 bottom-0 z-50 w-72 sm:w-80 shadow-2xl transition-transform duration-200 ease-out will-change-transform ${
@@ -216,31 +268,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
     const mobileDrawer = `fixed top-0 bottom-0 right-0 z-50 w-72 sm:w-80 h-screen shadow-2xl transition-transform duration-200 ease-out will-change-transform ${
       isOpen ? 'translate-x-0' : 'translate-x-full pointer-events-none'
     }`;
-    let desktopDock = '';
-    if (sidebarMode === 'collapse') {
-      desktopDock = 'md:sticky md:top-0 md:h-screen md:shrink-0 md:w-0 md:border-none md:overflow-hidden md:pointer-events-none md:opacity-0 md:translate-x-0 md:shadow-none';
-    } else if (sidebarMode === 'autohide') {
-      desktopDock = `md:fixed md:top-0 md:bottom-0 md:right-0 md:z-50 md:w-72 lg:md:w-80 md:h-screen md:shadow-2xl md:border-l transition-all duration-200 ease-out ${
-        isAutoPeekOpen ? 'md:translate-x-0 md:opacity-100 md:pointer-events-auto' : 'md:translate-x-full md:opacity-0 md:pointer-events-none'
-      }`;
-    } else {
-      desktopDock = 'md:sticky md:top-0 md:h-screen md:shrink-0 md:w-72 lg:md:w-80 md:border-l md:opacity-100 md:pointer-events-auto md:translate-x-0 md:shadow-none';
-    }
+    const desktopDock = isCollapsed
+      ? 'md:sticky md:top-0 md:h-screen md:shrink-0 md:w-0 md:border-none md:overflow-hidden md:pointer-events-none md:opacity-0 md:translate-x-0 md:shadow-none'
+      : 'md:sticky md:top-0 md:h-screen md:shrink-0 md:w-72 lg:md:w-80 md:border-l md:opacity-100 md:pointer-events-auto md:translate-x-0 md:shadow-none';
     positioningClasses = `${mobileDrawer} ${desktopDock} transition-all duration-200`;
   } else {
+    // Left placement (default)
     const mobileDrawer = `fixed top-0 bottom-0 left-0 z-50 w-72 sm:w-80 h-screen shadow-2xl transition-transform duration-200 ease-out will-change-transform ${
       isOpen ? 'translate-x-0' : '-translate-x-full pointer-events-none'
     }`;
-    let desktopDock = '';
-    if (sidebarMode === 'collapse') {
-      desktopDock = 'md:sticky md:top-0 md:h-screen md:shrink-0 md:w-0 md:border-none md:overflow-hidden md:pointer-events-none md:opacity-0 md:translate-x-0 md:shadow-none';
-    } else if (sidebarMode === 'autohide') {
-      desktopDock = `md:fixed md:top-0 md:bottom-0 md:left-0 md:z-50 md:w-72 lg:md:w-80 md:h-screen md:shadow-2xl md:border-r transition-all duration-200 ease-out ${
-        isAutoPeekOpen ? 'md:translate-x-0 md:opacity-100 md:pointer-events-auto' : 'md:-translate-x-full md:opacity-0 md:pointer-events-none'
-      }`;
-    } else {
-      desktopDock = 'md:sticky md:top-0 md:h-screen md:shrink-0 md:w-72 lg:md:w-80 md:border-r md:opacity-100 md:pointer-events-auto md:translate-x-0 md:shadow-none';
-    }
+    const desktopDock = isCollapsed
+      ? 'md:sticky md:top-0 md:h-screen md:shrink-0 md:w-0 md:border-none md:overflow-hidden md:pointer-events-none md:opacity-0 md:translate-x-0 md:shadow-none'
+      : 'md:sticky md:top-0 md:h-screen md:shrink-0 md:w-72 lg:md:w-80 md:border-r md:opacity-100 md:pointer-events-auto md:translate-x-0 md:shadow-none';
     positioningClasses = `${mobileDrawer} ${desktopDock} transition-all duration-200`;
   }
 
@@ -259,18 +298,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
         />
       )}
 
-      {/* Auto-hide backdrop on desktop to quickly dismiss when clicking outside */}
-      {sidebarMode === 'autohide' && isAutoPeekOpen && (
-        <div 
-          className="hidden md:block fixed inset-0 z-45 bg-black/20 backdrop-blur-[1px] transition-opacity"
-          onClick={onMouseLeave}
-        />
-      )}
-
       <aside 
         className={`${positioningClasses} flex flex-col`}
-        onMouseEnter={onMouseEnter}
-        onMouseLeave={onMouseLeave}
         style={{
           backgroundColor: 'var(--sidebar-main)',
           borderColor: 'var(--border-main)',
@@ -278,17 +307,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
         }}
       >
         <div className="w-72 sm:w-72 lg:w-80 flex flex-col h-full min-h-0">
-        {/* Top Header / Author Profile */}
+        {/* Top Header / Author Profile (Covering top of screen) */}
         <div 
           className="p-5 border-b"
           style={{ borderColor: 'var(--border-main)' }}
         >
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-start gap-3 min-w-0">
-              {config.avatarUrl ? (
+              {config?.avatarUrl ? (
                 <img 
                   src={config.avatarUrl} 
-                  alt={config.author} 
+                  alt={config?.author || 'Kyar-Kyar'} 
                   className="w-13 h-13 rounded-full object-cover shadow-sm shrink-0 border" 
                   style={{ borderColor: 'var(--border-main)' }}
                 />
@@ -301,7 +330,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     borderColor: 'var(--border-main)' 
                   }}
                 >
-                  {config.author.charAt(0)}
+                  {(config?.author || 'Kyar-Kyar').charAt(0)}
                 </div>
               )}
 
@@ -310,18 +339,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   className="text-base font-bold tracking-tight truncate"
                   style={{ color: 'var(--text-heading)' }}
                 >
-                  {config.author}
+                  {config?.author || 'Kyar-Kyar'}
                 </h2>
                 <p 
                   className="text-xs font-medium line-clamp-1 mt-0.5"
                   style={{ color: 'var(--text-muted)' }}
                 >
-                  {config.tagline}
+                  {config?.tagline || ''}
                 </p>
 
                 {/* Social icons */}
                 <div className="flex items-center gap-2.5 mt-2.5">
-                  {config.social.github && (
+                  {config?.social?.github && (
                     <a 
                       href={config.social.github} 
                       target="_blank" 
@@ -333,7 +362,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       <Github className="w-3.5 h-3.5" />
                     </a>
                   )}
-                  {config.social.twitter && (
+                  {config?.social?.twitter && (
                     <a 
                       href={config.social.twitter} 
                       target="_blank" 
@@ -345,7 +374,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       <Twitter className="w-3.5 h-3.5" />
                     </a>
                   )}
-                  {config.social.linkedin && (
+                  {config?.social?.linkedin && (
                     <a 
                       href={config.social.linkedin} 
                       target="_blank" 
@@ -357,7 +386,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       <Linkedin className="w-3.5 h-3.5" />
                     </a>
                   )}
-                  {config.social.email && (
+                  {config?.social?.email && (
                     <a 
                       href={`mailto:${config.social.email}`} 
                       className="hover:opacity-75 transition-opacity"
@@ -393,7 +422,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             )}
           </div>
 
-          {config.bio && (
+          {config?.bio && (
             <p 
               className="mt-3 text-xs leading-relaxed"
               style={{ color: 'var(--text-muted)' }}
@@ -403,16 +432,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
           )}
         </div>
 
-        {/* Search & Sidebar Mode Controls (Show, Auto-hide, Collapse) */}
+        {/* Search & Light/Dark Mode Controls side-by-side inside Sidebar */}
         <div 
-          className="p-3 border-b space-y-2.5"
+          className="p-3 border-b flex items-center gap-2"
           style={{ borderColor: 'var(--border-main)' }}
         >
           {/* Quick Search Button */}
           <button
             type="button"
             onClick={onOpenSearch}
-            className="w-full flex items-center justify-between px-3 py-2 text-xs rounded-lg border transition-all hover:border-[var(--accent)] group shadow-xs cursor-pointer focus:outline-none"
+            className="flex-1 flex items-center justify-between px-3 py-2 text-xs rounded-lg border transition-all hover:border-[var(--accent)] group shadow-xs cursor-pointer focus:outline-none"
             style={{
               backgroundColor: 'var(--card-main)',
               borderColor: 'var(--border-main)',
@@ -436,85 +465,41 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </kbd>
           </button>
 
-          {/* Theme & 3-Mode Sidebar Controls */}
-          <div className="flex items-center justify-between gap-2">
-            {/* Light / Dark Mode Toggle Button */}
-            <button
-              type="button"
-              onClick={onToggleColorMode}
-              className="p-1.5 px-2 rounded-lg border hover:opacity-85 transition-all cursor-pointer flex items-center gap-1.5 shadow-xs text-xs font-mono"
-              style={{
-                backgroundColor: 'var(--card-main)',
-                borderColor: 'var(--border-main)',
-                color: 'var(--text-heading)',
-              }}
-              title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-              aria-label="Toggle Light / Dark mode"
-            >
-              {isDark ? (
-                <Sun className="w-3.5 h-3.5 text-amber-400" />
-              ) : (
-                <Moon className="w-3.5 h-3.5 text-indigo-400" />
-              )}
-              <span className="text-[11px]">{isDark ? 'Dark' : 'Light'}</span>
-            </button>
+          {/* Light / Dark Mode Toggle Button */}
+          <button
+            type="button"
+            onClick={onToggleColorMode}
+            className="p-2 rounded-lg border hover:opacity-85 transition-all cursor-pointer shrink-0 flex items-center justify-center shadow-xs"
+            style={{
+              backgroundColor: 'var(--card-main)',
+              borderColor: 'var(--border-main)',
+              color: 'var(--text-heading)',
+            }}
+            title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            aria-label="Toggle Light / Dark mode"
+          >
+            {isDark ? (
+              <Sun className="w-4 h-4 text-amber-400" />
+            ) : (
+              <Moon className="w-4 h-4 text-indigo-400" />
+            )}
+          </button>
 
-            {/* 3-Mode Sidebar Selector: Show | Auto | Hide */}
-            <div 
-              className="flex items-center rounded-lg border p-0.5 text-[11px] font-mono select-none"
-              style={{
-                backgroundColor: 'var(--card-main)',
-                borderColor: 'var(--border-main)',
-              }}
-              title="Sidebar visibility mode"
-            >
-              <button
-                type="button"
-                onClick={() => onSetSidebarMode('show')}
-                className={`px-2 py-1 rounded transition-all cursor-pointer ${
-                  sidebarMode === 'show' ? 'font-bold shadow-xs' : 'opacity-65 hover:opacity-100'
-                }`}
-                style={{
-                  backgroundColor: sidebarMode === 'show' ? 'var(--bg-main)' : 'transparent',
-                  color: sidebarMode === 'show' ? 'var(--text-heading)' : 'var(--text-muted)',
-                  border: sidebarMode === 'show' ? '1px solid var(--border-main)' : '1px solid transparent',
-                }}
-                title="Show: Pinned permanently in normal flow"
-              >
-                Show
-              </button>
-              <button
-                type="button"
-                onClick={() => onSetSidebarMode('autohide')}
-                className={`px-2 py-1 rounded transition-all cursor-pointer ${
-                  sidebarMode === 'autohide' ? 'font-bold shadow-xs' : 'opacity-65 hover:opacity-100'
-                }`}
-                style={{
-                  backgroundColor: sidebarMode === 'autohide' ? 'var(--bg-main)' : 'transparent',
-                  color: sidebarMode === 'autohide' ? 'var(--text-heading)' : 'var(--text-muted)',
-                  border: sidebarMode === 'autohide' ? '1px solid var(--border-main)' : '1px solid transparent',
-                }}
-                title="Auto-hide: Hidden while reading, reveals on hover"
-              >
-                Auto
-              </button>
-              <button
-                type="button"
-                onClick={() => onSetSidebarMode('collapse')}
-                className={`px-2 py-1 rounded transition-all cursor-pointer ${
-                  sidebarMode === 'collapse' ? 'font-bold shadow-xs' : 'opacity-65 hover:opacity-100'
-                }`}
-                style={{
-                  backgroundColor: sidebarMode === 'collapse' ? 'var(--bg-main)' : 'transparent',
-                  color: sidebarMode === 'collapse' ? 'var(--text-heading)' : 'var(--text-muted)',
-                  border: sidebarMode === 'collapse' ? '1px solid var(--border-main)' : '1px solid transparent',
-                }}
-                title="Collapse: Always keep collapsed"
-              >
-                Hide
-              </button>
-            </div>
-          </div>
+          {/* Collapse Toggle Button (for desktop reading mode) */}
+          <button
+            type="button"
+            onClick={onToggleCollapse}
+            className="p-2 rounded-lg border hover:opacity-85 transition-all cursor-pointer shrink-0 flex items-center justify-center shadow-xs"
+            style={{
+              backgroundColor: 'var(--card-main)',
+              borderColor: 'var(--border-main)',
+              color: 'var(--text-heading)',
+            }}
+            title={isRight ? "Collapse sidebar (Cmd+\\)" : "Collapse sidebar (Cmd+\\)"}
+            aria-label="Collapse sidebar"
+          >
+            {isRight ? <PanelRightClose className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
+          </button>
         </div>
 
         {/* Navigation list */}
@@ -571,8 +556,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
           )}
 
-          {/* Standalone pages outside folders */}
-          {rootNotes.length > 0 && (
+          {/* Standalone unpinned pages outside folders */}
+          {unpinnedRootNotes.length > 0 && (
             <div>
               <div 
                 className="text-[11px] font-semibold uppercase tracking-wider font-mono mb-1.5 px-2 flex items-center gap-1.5"
@@ -582,48 +567,52 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <span>Pages</span>
               </div>
               <div className="space-y-0.5">
-                {rootNotes.map((rootNode) => renderTreeNode(rootNode, 0))}
+                {unpinnedRootNotes.map((rootNode) => renderTreeNode(rootNode, 0))}
               </div>
             </div>
           )}
 
-          {/* Tags Directory Page Navigation Entry */}
-          {allTags.length > 0 && (
-            <div
-              onClick={() => {
-                onViewAllTags?.();
-                if (isPopup || window.innerWidth < 768) onClose();
-              }}
-              className={`flex items-center justify-between py-1.5 px-2 rounded-md cursor-pointer text-xs font-medium transition-colors select-none ${
-                isTagsView && !selectedTag ? 'font-semibold shadow-xs' : 'hover:opacity-85'
-              }`}
-              style={{
-                backgroundColor: isTagsView && !selectedTag ? 'var(--card-main)' : 'transparent',
-                color: isTagsView && !selectedTag ? 'var(--text-heading)' : 'var(--text-main)',
-                border: isTagsView && !selectedTag ? '1px solid var(--border-main)' : '1px solid transparent',
-              }}
-              title="Browse all tags"
-            >
-              <div className="flex items-center gap-1.5 flex-1 min-w-0">
-                <Tag className="w-3.5 h-3.5" style={{ color: 'var(--text-muted)' }} />
-                <span className="truncate font-mono">Tags</span>
-              </div>
-
-              <span 
-                className="text-[10px] font-mono px-1.5 py-0.5 rounded border" 
-                style={{ 
-                  backgroundColor: 'var(--bg-main)',
-                  borderColor: 'var(--border-main)',
-                  color: 'var(--text-muted)' 
+          {/* Tags Navigation Entry (Below Folders, zero clutter) */}
+          {tagCounts.length > 0 && (
+            <div className="pt-0.5">
+              <div
+                onClick={() => {
+                  onViewAllTags?.();
+                  if (isPopup || window.innerWidth < 768) {
+                    onClose();
+                  }
                 }}
-                title={`${allTags.length} tags`}
+                className={`flex items-center justify-between py-1.5 px-2 rounded-md cursor-pointer text-xs font-medium transition-colors select-none ${
+                  isTagsView && !selectedTag ? 'font-semibold shadow-xs' : 'hover:opacity-85'
+                }`}
+                style={{
+                  backgroundColor: isTagsView && !selectedTag ? 'var(--card-main)' : 'transparent',
+                  color: isTagsView && !selectedTag ? 'var(--text-heading)' : 'var(--text-main)',
+                  border: isTagsView && !selectedTag ? '1px solid var(--border-main)' : '1px solid transparent',
+                }}
+                title="Browse all tags"
               >
-                {allTags.length}
-              </span>
+                <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                  <Tag className="w-3.5 h-3.5" style={{ color: 'var(--text-muted)' }} />
+                  <span className="truncate font-mono">Tags</span>
+                </div>
+
+                <span 
+                  className="text-[10px] font-mono px-1.5 py-0.5 rounded border" 
+                  style={{ 
+                    backgroundColor: 'var(--bg-main)',
+                    borderColor: 'var(--border-main)',
+                    color: 'var(--text-muted)' 
+                  }}
+                  title={`${tagCounts.length} unique tags`}
+                >
+                  {tagCounts.length}
+                </span>
+              </div>
             </div>
           )}
         </div>
-        </div>
+      </div>
       </aside>
     </>
   );

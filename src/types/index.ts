@@ -64,7 +64,6 @@ export type PalettePreset =
 
 export type BackgroundPattern = 'dots' | 'grid' | 'lines' | 'crosshatch' | 'blueprint' | 'noise' | 'none';
 export type SidebarPlacement = 'left' | 'right' | 'popup';
-export type SidebarMode = 'show' | 'collapse' | 'autohide';
 
 export interface CalibratedPalette {
   name: string;
@@ -109,14 +108,23 @@ export interface SiteConfig {
   avatarUrl: string;
   baseUrl?: string;
   theme: {
+    // Master palette or default dark mode palette
     palette: PalettePreset | string;
+    // Explicit separate light mode palette (e.g. "classic-light", "solarized-light", "gruvbox-light")
     lightPalette?: PalettePreset | string;
+    // Explicit separate dark mode palette (e.g. "solarized-dark", "gruvbox-dark", "nord", etc.)
     darkPalette?: PalettePreset | string;
+    // Initial color mode: "dark", "light", or "system"
     colorMode: 'dark' | 'light' | 'system';
+    // Sidebar position: "left", "right", or "popup"
     sidebarPlacement: SidebarPlacement;
+    // Background texture pattern: "dots", "grid", "lines", "crosshatch", "blueprint", "noise", "none"
     backgroundPattern: BackgroundPattern;
+    // Typography: "serif", "sans", or "mono"
     fontFamily: 'sans' | 'serif' | 'mono';
+    // Global accent color override (optional)
     accentColor?: string;
+    // Granular hex color overrides from YAML (optional)
     customColors?: CustomThemeColors;
   };
   navigation: {
@@ -131,6 +139,11 @@ export interface SiteConfig {
     github?: string;
     twitter?: string;
     linkedin?: string;
+    mastodon?: string;
     email?: string;
+    rss?: boolean;
+  };
+  footer?: {
+    text: string;
   };
 }

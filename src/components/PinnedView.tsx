@@ -148,7 +148,7 @@ export const PinnedView: React.FC<PinnedViewProps> = ({
           className="font-mono text-[11px] tracking-wide"
           style={{ color: 'var(--text-muted)' }}
         >
-          {config.footer?.text || `© ${config.author} ${new Date().getFullYear()}`}
+          {config?.footer?.text || `© ${config?.author || 'Kyar-Kyar'} ${new Date().getFullYear()}`}
         </div>
       </footer>
     </div>
