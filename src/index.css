@@ -1,0 +1,375 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --accent: #268bd2;
+    --font-serif: 'Lora', Georgia, Cambria, 'Times New Roman', Times, serif;
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-mono: 'Fira Code', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    --font-active: var(--font-sans);
+    --pattern-color: rgba(38, 139, 210, 0.08);
+  }
+
+  html, body, #root {
+    font-family: var(--font-active);
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    background-color: var(--bg-main, #002b36);
+    color: var(--text-main, #93a1a1);
+  }
+
+  button, input, select, textarea, kbd {
+    font-family: inherit;
+  }
+}
+
+/* 
+ * UNIFORM TYPOGRAPHY ENFORCEMENT
+ */
+html[data-font="mono"],
+html[data-font="mono"] body,
+html[data-font="mono"] #root,
+html[data-font="mono"] button,
+html[data-font="mono"] input,
+html[data-font="mono"] select,
+html[data-font="mono"] textarea,
+html[data-font="mono"] kbd,
+html[data-font="mono"] h1,
+html[data-font="mono"] h2,
+html[data-font="mono"] h3,
+html[data-font="mono"] h4,
+html[data-font="mono"] h5,
+html[data-font="mono"] h6,
+html[data-font="mono"] p,
+html[data-font="mono"] span,
+html[data-font="mono"] a {
+  font-family: var(--font-mono);
+}
+
+html[data-font="serif"],
+html[data-font="serif"] body,
+html[data-font="serif"] #root,
+html[data-font="serif"] h1,
+html[data-font="serif"] h2,
+html[data-font="serif"] h3,
+html[data-font="serif"] h4,
+html[data-font="serif"] h5,
+html[data-font="serif"] h6,
+html[data-font="serif"] p,
+html[data-font="serif"] article,
+html[data-font="serif"] span,
+html[data-font="serif"] a,
+html[data-font="serif"] button,
+html[data-font="serif"] input {
+  font-family: var(--font-serif);
+}
+
+html[data-font="sans"],
+html[data-font="sans"] body,
+html[data-font="sans"] #root,
+html[data-font="sans"] h1,
+html[data-font="sans"] h2,
+html[data-font="sans"] h3,
+html[data-font="sans"] h4,
+html[data-font="sans"] h5,
+html[data-font="sans"] h6,
+html[data-font="sans"] p,
+html[data-font="sans"] article,
+html[data-font="sans"] span,
+html[data-font="sans"] a,
+html[data-font="sans"] button,
+html[data-font="sans"] input {
+  font-family: var(--font-sans);
+}
+
+/* Code elements inside markdown retain monospace */
+pre, code, pre *, code *, .code-block, .code-block * {
+  font-family: var(--font-mono) !important;
+}
+
+/* Background Patterns & Textures */
+.pattern-dots {
+  background-image: radial-gradient(var(--pattern-color) 1.25px, transparent 1.25px);
+  background-size: 24px 24px;
+}
+
+.pattern-grid {
+  background-image: linear-gradient(to right, var(--pattern-color) 1px, transparent 1px),
+                    linear-gradient(to bottom, var(--pattern-color) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+.pattern-lines {
+  background-image: linear-gradient(to bottom, var(--pattern-color) 1px, transparent 1px);
+  background-size: 100% 28px;
+}
+
+.pattern-crosshatch {
+  background-image: repeating-linear-gradient(45deg, var(--pattern-color) 0, var(--pattern-color) 1px, transparent 0, transparent 50%),
+                    repeating-linear-gradient(-45deg, var(--pattern-color) 0, var(--pattern-color) 1px, transparent 0, transparent 50%);
+  background-size: 20px 20px;
+}
+
+.pattern-blueprint {
+  background-image: linear-gradient(var(--pattern-color) 1.5px, transparent 1.5px),
+                    linear-gradient(90deg, var(--pattern-color) 1.5px, transparent 1.5px),
+                    linear-gradient(rgba(120, 120, 120, 0.04) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(120, 120, 120, 0.04) 1px, transparent 1px);
+  background-size: 100px 100px, 100px 100px, 20px 20px, 20px 20px;
+}
+
+.pattern-noise {
+  background-image: radial-gradient(var(--pattern-color) 0.75px, transparent 0.75px);
+  background-size: 6px 6px;
+}
+
+.pattern-none {
+  background-image: none;
+}
+
+/* Callout / Admonition Styles — 1px dotted all-around border */
+.callout {
+  margin: 1.5rem 0;
+  padding: 1rem 1.25rem;
+  border-width: 1px;
+  border-style: dotted;
+  border-radius: 0.5rem;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  background-color: var(--card-main);
+  border-color: var(--accent);
+}
+
+.callout-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: var(--text-heading);
+}
+
+.callout-note {
+  border-color: var(--accent);
+  background-color: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: var(--text-main);
+}
+
+.callout-tip {
+  border-color: #2aa198;
+  background-color: rgba(42, 161, 152, 0.1);
+  color: var(--text-main);
+}
+
+.callout-info {
+  border-color: var(--accent);
+  background-color: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: var(--text-main);
+}
+
+.callout-warning {
+  border-color: #b58900;
+  background-color: rgba(181, 137, 0, 0.1);
+  color: var(--text-main);
+}
+
+.callout-quote {
+  border-color: #6c71c4;
+  background-color: rgba(108, 113, 196, 0.1);
+  color: var(--text-main);
+}
+
+/* Markdown Rendering Engine */
+.markdown-body {
+  font-size: 0.95rem;
+  line-height: 1.68;
+  color: var(--text-main);
+}
+
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3,
+.markdown-body h4 {
+  color: var(--text-heading);
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  margin-top: 1.75rem;
+  margin-bottom: 0.65rem;
+  line-height: 1.35;
+  scroll-margin-top: 5rem;
+}
+
+.markdown-body h1 {
+  font-size: 1.75rem;
+  margin-top: 0;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--border-main);
+}
+
+.markdown-body h2 {
+  font-size: 1.25rem;
+  padding-bottom: 0.3rem;
+  border-bottom: 1px solid var(--border-main);
+}
+
+.markdown-body h3 {
+  font-size: 1.08rem;
+}
+
+.markdown-body p {
+  margin-top: 1.15rem;
+  margin-bottom: 1.15rem;
+}
+
+.markdown-body a {
+  color: var(--accent);
+  text-decoration-line: underline;
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 3px;
+  transition: opacity 0.15s ease;
+}
+
+.markdown-body a:hover {
+  opacity: 0.85;
+}
+
+.markdown-body a.wikilink,
+.markdown-body a.internal-link {
+  background-color: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 500;
+  border-radius: 4px;
+  padding: 1px 6px;
+  border-bottom: 1px dashed var(--accent);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.markdown-body a.wikilink:hover,
+.markdown-body a.internal-link:hover {
+  background-color: color-mix(in srgb, var(--accent) 22%, transparent);
+  opacity: 1;
+}
+
+.markdown-body ul {
+  list-style-type: disc;
+  padding-left: 1.5rem;
+  margin-top: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.markdown-body ol {
+  list-style-type: decimal;
+  padding-left: 1.5rem;
+  margin-top: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.markdown-body li {
+  margin-top: 0.35rem;
+  margin-bottom: 0.35rem;
+}
+
+.markdown-body blockquote {
+  border: 1px dotted var(--border-main);
+  border-radius: 0.5rem;
+  padding: 0.85rem 1.25rem;
+  margin: 1.25rem 0;
+  font-style: italic;
+  color: var(--text-muted);
+  background-color: var(--card-main);
+}
+
+.markdown-body hr {
+  margin: 2rem 0;
+  border: 0;
+  height: 1px;
+  background-color: var(--border-main);
+}
+
+.markdown-body table {
+  width: 100%;
+  margin: 1.5rem 0;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.markdown-body th, .markdown-body td {
+  padding: 0.65rem 1rem;
+  border: 1px solid var(--border-main);
+  text-align: left;
+}
+
+.markdown-body th {
+  background-color: var(--sidebar-main);
+  color: var(--text-heading);
+  font-weight: 600;
+}
+
+.markdown-body code:not(pre code) {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  padding: 0.15em 0.4em;
+  border-radius: 0.25rem;
+  background-color: var(--code-bg);
+  border: 1px solid var(--border-main);
+  color: var(--accent);
+}
+
+.markdown-body pre {
+  margin: 1.25rem 0;
+  padding: 1rem 1.25rem;
+  border-radius: 0.5rem;
+  background-color: var(--code-bg);
+  border: 1px solid var(--border-main);
+  overflow-x: auto;
+  font-size: 0.88rem;
+  line-height: 1.55;
+  position: relative;
+}
+
+.markdown-body pre code {
+  background: transparent;
+  padding: 0;
+  border: 0;
+  font-size: inherit;
+  color: inherit;
+}
+
+/* Heading Anchors */
+.anchor-heading {
+  position: relative;
+}
+
+.anchor-heading .heading-anchor {
+  position: absolute;
+  left: -1.25rem;
+  opacity: 0;
+  text-decoration: none;
+  color: var(--text-muted);
+  font-weight: normal;
+  transition: opacity 0.15s ease;
+}
+
+.anchor-heading:hover .heading-anchor {
+  opacity: 0.65;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-main);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}

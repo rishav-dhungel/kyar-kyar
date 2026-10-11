@@ -1,0 +1,23 @@
+title: "kyar-kyar"
+author: "kyar-kyar"
+tagline: "Digital Garden & Engineering Notebook"
+bio: "Personal digital garden, technical research notes, engineering notebooks, and living documentation."
+avatarUrl: ""
+theme:
+  palette: "solarized-dark"
+  lightPalette: "classic-light"
+  darkPalette: "solarized-dark"
+  colorMode: "dark"
+  sidebarPlacement: "left"
+  backgroundPattern: "dots"
+  fontFamily: "sans"
+navigation:
+  showFolderCounts: false
+  showTableOfContents: true
+  showBacklinks: true
+  showReadingTime: true
+  showWordCount: true
+  defaultExpandedFolders: true
+social:
+  github: "https://github.com"
+  twitter: "https://twitter.com"
